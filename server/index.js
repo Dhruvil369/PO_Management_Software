@@ -26,17 +26,17 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/pos', require('./routes/pos'));
 
 // MongoDB connection
-const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/po-management', {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('MongoDB connected successfully');
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
-    console.log('Server will start without MongoDB. Please ensure MongoDB is running.');
-  }
+const connectDB = async() => {
+    try {
+        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/po-management', {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
+        console.log('MongoDB connected successfully');
+    } catch (error) {
+        console.error('MongoDB connection error:', error);
+        console.log('Server will start without MongoDB. Please ensure MongoDB is running.');
+    }
 };
 
 // Connect to database
@@ -44,11 +44,11 @@ connectDB();
 
 // Basic route
 app.get('/', (req, res) => {
-  res.json({ message: 'PO Management System API' });
+    res.json({ message: 'PO Management System API' });
 });
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });

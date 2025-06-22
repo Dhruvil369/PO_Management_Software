@@ -248,7 +248,7 @@ router.post('/:id/machines/:stage', auth, upload.single('image'), async(req, res
         res.status(201).json({
             message: 'Machine added successfully',
             machine: savedMachine,
-            challanNo: savedMachine.packagingDispatch ? .challanNo,
+            challanNo: savedMachine.packagingDispatch.challanNo,
             po: {
                 currentStage: po.currentStage,
                 currentStageDisplay: po.getStageDisplayName(po.currentStage)
@@ -371,7 +371,7 @@ router.put('/:poId/machines/:machineId/stages/:stage', auth, upload.single('imag
         res.json({
             message: 'Stage updated successfully',
             machine,
-            challanNo: machine.packagingDispatch ? .challanNo,
+            challanNo: machine.packagingDispatch.challanNo,
             allMachinesCompleted,
             po: {
                 currentStage: po.currentStage,

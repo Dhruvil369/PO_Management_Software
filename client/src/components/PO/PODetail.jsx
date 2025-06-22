@@ -419,7 +419,7 @@ const PODetail = () => {
                 color="success"
                 onClick={handleFinalizePO}
               >
-                Finalize PO
+                Complete PO
               </Button>
             )}
           </Box>
