@@ -6,16 +6,21 @@ import {
   Button,
   Box,
   Grid,
-  Alert
+  Alert,
+  Input
 } from '@mui/material';
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
-const PackagingDispatchForm = ({ onComplete, onBack, machineData }) => {
+const PackagingDispatchForm = ({ onComplete, onBack, machineData, initialData }) => {
   const [formData, setFormData] = useState({
     size: '',
     totalWeight: '',
     noOfRolls: '',
     noOfBags: '',
-    challanNo: ''
+    challanNo: '',
+    date: initialData?.date || null,
+    image: null
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,31 +34,59 @@ const PackagingDispatchForm = ({ onComplete, onBack, machineData }) => {
     setError('');
   };
 
+  const handleDateChange = (newDate) => {
+    setFormData(prev => ({ ...prev, date: newDate }));
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      if (!allowedTypes.includes(file.type)) {
+        setError('Please select a valid image file (JPEG, PNG, GIF)');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setError('File size must be less than 5MB');
+        return;
+      }
+      setFormData(prev => ({ ...prev, image: file }));
+      setError('');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
-    console.log('PackagingDispatchForm - Form data:', formData);
-
     try {
-      const submitData = {
-        ...formData,
-        totalWeight: formData.totalWeight ? parseFloat(formData.totalWeight) : null,
-        noOfRolls: formData.noOfRolls ? parseInt(formData.noOfRolls) : null,
-        noOfBags: formData.noOfBags ? parseInt(formData.noOfBags) : null
-      };
-
-      console.log('PackagingDispatchForm - Submitting data:', submitData);
-
+      let submitData;
+      if (formData.image) {
+        submitData = new FormData();
+        Object.keys(formData).forEach(key => {
+          if (formData[key] !== null && formData[key] !== '') {
+            if (key === 'date' && formData[key]) {
+              submitData.append(key, new Date(formData[key]).toISOString());
+            } else {
+              submitData.append(key, formData[key]);
+            }
+          }
+        });
+      } else {
+        submitData = {
+          ...formData,
+          totalWeight: formData.totalWeight ? parseFloat(formData.totalWeight) : null,
+          noOfRolls: formData.noOfRolls ? parseInt(formData.noOfRolls) : null,
+          noOfBags: formData.noOfBags ? parseInt(formData.noOfBags) : null,
+          date: formData.date ? new Date(formData.date).toISOString() : null
+        };
+      }
       if (onComplete) {
         await onComplete(submitData);
-        console.log('PackagingDispatchForm - Data submitted successfully');
       } else {
         throw new Error('onComplete function not provided');
       }
     } catch (error) {
-      console.error('PackagingDispatchForm - Submit error:', error);
       setError('Failed to save packaging & dispatch data: ' + (error.message || 'Unknown error'));
     } finally {
       setLoading(false);
@@ -65,6 +98,11 @@ const PackagingDispatchForm = ({ onComplete, onBack, machineData }) => {
       <Paper elevation={3} sx={{ p: { xs: 2, md: 6 }, width: '100%', maxWidth: 1100, mt: 2 }}>
         <Typography variant="h4" gutterBottom fontWeight={700}>
           Stage 6: Packaging & Dispatch
+          {initialData?.poNumber && initialData?.jobTitle && (
+            <span style={{ fontWeight: 400, fontSize: 22, marginLeft: 16 }}>
+              | {initialData.poNumber} - {initialData.jobTitle}
+            </span>
+          )}
         </Typography>
         {machineData && (
           <Typography variant="subtitle1" color="primary" gutterBottom>
@@ -130,6 +168,48 @@ const PackagingDispatchForm = ({ onComplete, onBack, machineData }) => {
                 onChange={handleChange}
                 disabled={loading}
               />
+            </Grid>
+            <Grid item xs={12}>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label="Date"
+                  value={formData.date}
+                  onChange={handleDateChange}
+                  disablePast
+                  renderInput={(params) => (
+                    <TextField {...params} fullWidth required disabled={loading} inputProps={{ ...params.inputProps, readOnly: true }} />
+                  )}
+                />
+              </LocalizationProvider>
+            </Grid>
+            <Grid item xs={12}>
+              <Box>
+                <Typography variant="subtitle1" gutterBottom>
+                  Upload Image
+                </Typography>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  disabled={loading}
+                  sx={{ display: 'none' }}
+                  id="packaging-image-upload"
+                />
+                <label htmlFor="packaging-image-upload">
+                  <Button
+                    variant="outlined"
+                    component="span"
+                    disabled={loading}
+                  >
+                    Choose Image
+                  </Button>
+                </label>
+                {formData.image && (
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    Selected: {formData.image.name}
+                  </Typography>
+                )}
+              </Box>
             </Grid>
           </Grid>
           <Box sx={{ mt: 4, display: 'flex', justifyContent: 'space-between' }}>

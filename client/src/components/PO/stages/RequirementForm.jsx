@@ -104,10 +104,15 @@ const RequirementForm = ({ onComplete, availableMachines, initialData, isEditing
         submitData = new FormData();
         Object.keys(formData).forEach(key => {
           if (formData[key] !== null && formData[key] !== '') {
-            submitData.append(key, formData[key]);
+            // Convert 'date' field to ISO string if present
+            if (key === 'date' && formData[key]) {
+              submitData.append(key, new Date(formData[key]).toISOString());
+            } else {
+              submitData.append(key, formData[key]);
+            }
           }
         });
-        console.log('RequirementForm - Adding mode, sending FormData');
+        console.log('RequirementForm - Adding mode, sending FormData', Array.from(submitData.entries()));
       }
 
       // Call the onComplete function passed from parent
@@ -130,6 +135,11 @@ const RequirementForm = ({ onComplete, availableMachines, initialData, isEditing
       <Paper elevation={3} sx={{ p: { xs: 2, md: 6 }, width: '100%', maxWidth: 1100, mt: 2 }}>
         <Typography variant="h4" gutterBottom fontWeight={700}>
           Stage 1: Requirement
+          {initialData?.poNumber && initialData?.jobTitle && (
+            <span style={{ fontWeight: 400, fontSize: 22, marginLeft: 16 }}>
+              | {initialData.poNumber} - {initialData.jobTitle}
+            </span>
+          )}
         </Typography>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -176,14 +186,27 @@ const RequirementForm = ({ onComplete, availableMachines, initialData, isEditing
               />
             </Grid>
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Bag Type"
-                name="bagType"
-                value={formData.bagType}
-                onChange={handleChange}
-                disabled={loading}
-              />
+              <FormControl fullWidth required variant="outlined" sx={{ minWidth: 220 }}>
+                <InputLabel id="bag-type-label">Bag Type</InputLabel>
+                <Select
+                  labelId="bag-type-label"
+                  id="bag-type-select"
+                  label="Bag Type"
+                  name="bagType"
+                  value={formData.bagType}
+                  onChange={handleChange}
+                  disabled={loading}
+                  MenuProps={{ PaperProps: { style: { maxHeight: 300, minWidth: 220 } } }}
+                  renderValue={selected => selected || 'Select Bag Type'}
+                >
+                  <MenuItem value="" disabled>
+                    <em>Select Bag Type</em>
+                  </MenuItem>
+                  {["Carry Bag","Garbage Bag","Grocery Bag","Bag on Roll","Sheet Form","Roll Form","Butter Paper","Shower Cap","Roll"].map(option => (
+                    <MenuItem key={option} value={option}>{option}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
             <Grid item xs={12}>
               <TextField
@@ -198,14 +221,28 @@ const RequirementForm = ({ onComplete, availableMachines, initialData, isEditing
               />
             </Grid>
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Print"
-                name="print"
-                value={formData.print}
-                onChange={handleChange}
-                disabled={loading}
-              />
+              <FormControl fullWidth required variant="outlined" sx={{ minWidth: 220 }}>
+                <InputLabel id="print-label">Print</InputLabel>
+                <Select
+                  labelId="print-label"
+                  id="print-select"
+                  label="Print"
+                  name="print"
+                  value={formData.print}
+                  onChange={handleChange}
+                  disabled={loading}
+                 
+                  MenuProps={{ PaperProps: { style: { maxHeight: 200, minWidth: 220 } } }}
+                  renderValue={selected => selected || 'Select Print'}
+                >
+                  <MenuItem value="" disabled>
+                    <em>Select Print</em>
+                  </MenuItem>
+                  {["Offline","Online"].map(option => (
+                    <MenuItem key={option} value={option}>{option}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
             <Grid item xs={12}>
               <TextField
@@ -277,8 +314,8 @@ const RequirementForm = ({ onComplete, availableMachines, initialData, isEditing
               sx={{ minWidth: 180, fontWeight: 600 }}
             >
               {loading
-                ? (isEditing ? 'Updating...' : 'Adding Machine...')
-                : (isEditing ? 'Update Machine' : 'Add Machine')
+                ? (isEditing ? 'Updating...' : 'Adding Size...')
+                : (isEditing ? 'Update Machine' : 'Add Size')
               }
             </Button>
           </Box>

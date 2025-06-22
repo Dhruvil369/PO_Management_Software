@@ -8,8 +8,10 @@ import {
   Grid,
   Alert
 } from '@mui/material';
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
-const CuttingSealingForm = ({ onComplete, onBack, machineData }) => {
+const CuttingSealingForm = ({ onComplete, onBack, machineData, initialData }) => {
   const [formData, setFormData] = useState({
     machineNo: '',
     size: '',
@@ -19,7 +21,8 @@ const CuttingSealingForm = ({ onComplete, onBack, machineData }) => {
     noOfRolls: '',
     cuttingWaste: '',
     printWaste: '',
-    kgs: ''
+    kgs: '',
+    date: initialData?.date || null
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -31,6 +34,10 @@ const CuttingSealingForm = ({ onComplete, onBack, machineData }) => {
       [name]: value
     }));
     setError('');
+  };
+
+  const handleDateChange = (newDate) => {
+    setFormData(prev => ({ ...prev, date: newDate }));
   };
 
   const handleSubmit = async (e) => {
@@ -49,7 +56,8 @@ const CuttingSealingForm = ({ onComplete, onBack, machineData }) => {
         noOfRolls: formData.noOfRolls ? parseInt(formData.noOfRolls) : null,
         cuttingWaste: formData.cuttingWaste ? parseFloat(formData.cuttingWaste) : null,
         printWaste: formData.printWaste ? parseFloat(formData.printWaste) : null,
-        kgs: formData.kgs ? parseFloat(formData.kgs) : null
+        kgs: formData.kgs ? parseFloat(formData.kgs) : null,
+        date: formData.date ? new Date(formData.date).toISOString() : null // ensure date is sent as ISO string
       };
 
       console.log('CuttingSealingForm - Submitting data:', submitData);
@@ -73,6 +81,11 @@ const CuttingSealingForm = ({ onComplete, onBack, machineData }) => {
       <Paper elevation={3} sx={{ p: { xs: 2, md: 6 }, width: '100%', maxWidth: 1100, mt: 2 }}>
         <Typography variant="h4" gutterBottom fontWeight={700}>
           Stage 4: Cutting & Sealing
+          {initialData?.poNumber && initialData?.jobTitle && (
+            <span style={{ fontWeight: 400, fontSize: 22, marginLeft: 16 }}>
+              | {initialData.poNumber} - {initialData.jobTitle}
+            </span>
+          )}
         </Typography>
         {machineData && (
           <Typography variant="subtitle1" color="primary" gutterBottom>
@@ -87,6 +100,19 @@ const CuttingSealingForm = ({ onComplete, onBack, machineData }) => {
         <Box component="form" onSubmit={handleSubmit}>
           <Grid container spacing={4}>
             <Grid item xs={12}>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label="Date"
+                  value={formData.date}
+                  onChange={handleDateChange}
+                  disablePast
+                  renderInput={(params) => (
+                    <TextField {...params} fullWidth required disabled={loading} inputProps={{ ...params.inputProps, readOnly: true }} />
+                  )}
+                />
+              </LocalizationProvider>
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
               <TextField
                 fullWidth
                 label="Machine No."
@@ -97,7 +123,7 @@ const CuttingSealingForm = ({ onComplete, onBack, machineData }) => {
                 disabled={loading}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={6} md={4}>
               <TextField
                 fullWidth
                 label="Size"
@@ -107,7 +133,7 @@ const CuttingSealingForm = ({ onComplete, onBack, machineData }) => {
                 disabled={loading}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={6} md={4}>
               <TextField
                 fullWidth
                 label="Operator Name"
@@ -117,7 +143,7 @@ const CuttingSealingForm = ({ onComplete, onBack, machineData }) => {
                 disabled={loading}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={6} md={4}>
               <TextField
                 fullWidth
                 label="Heating 1"
@@ -128,7 +154,7 @@ const CuttingSealingForm = ({ onComplete, onBack, machineData }) => {
                 disabled={loading}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={6} md={4}>
               <TextField
                 fullWidth
                 label="Heating 2"
@@ -139,7 +165,7 @@ const CuttingSealingForm = ({ onComplete, onBack, machineData }) => {
                 disabled={loading}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={6} md={4}>
               <TextField
                 fullWidth
                 label="No. of Rolls"
@@ -150,7 +176,7 @@ const CuttingSealingForm = ({ onComplete, onBack, machineData }) => {
                 disabled={loading}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={6} md={4}>
               <TextField
                 fullWidth
                 label="Cutting Waste"
@@ -161,7 +187,7 @@ const CuttingSealingForm = ({ onComplete, onBack, machineData }) => {
                 disabled={loading}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={6} md={4}>
               <TextField
                 fullWidth
                 label="Print Waste"
@@ -172,7 +198,7 @@ const CuttingSealingForm = ({ onComplete, onBack, machineData }) => {
                 disabled={loading}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={6} md={4}>
               <TextField
                 fullWidth
                 label="Kgs"

@@ -12,6 +12,8 @@ import {
   Select,
   MenuItem
 } from '@mui/material';
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
 const ExtrusionProductionForm = ({ onComplete, onBack, machineData, initialData, isEditing, machineNo, availableMachines }) => {
   const [formData, setFormData] = useState({
@@ -25,7 +27,8 @@ const ExtrusionProductionForm = ({ onComplete, onBack, machineData, initialData,
     noOfRolls: initialData?.noOfRolls || '',
     waste: initialData?.waste || '',
     qcApprovedBy: initialData?.qcApprovedBy || '',
-    remark: initialData?.remark || ''
+    remark: initialData?.remark || '',
+    date: initialData?.date || null
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -37,6 +40,10 @@ const ExtrusionProductionForm = ({ onComplete, onBack, machineData, initialData,
       [name]: value
     }));
     setError('');
+  };
+
+  const handleDateChange = (newDate) => {
+    setFormData(prev => ({ ...prev, date: newDate }));
   };
 
   const handleSubmit = async (e) => {
@@ -54,7 +61,8 @@ const ExtrusionProductionForm = ({ onComplete, onBack, machineData, initialData,
         frequency: formData.frequency ? parseFloat(formData.frequency) : null,
         kgs: formData.kgs ? parseFloat(formData.kgs) : null,
         noOfRolls: formData.noOfRolls ? parseInt(formData.noOfRolls) : null,
-        waste: formData.waste ? parseFloat(formData.waste) : null
+        waste: formData.waste ? parseFloat(formData.waste) : null,
+        date: formData.date ? new Date(formData.date).toISOString() : null // ensure date is sent as ISO string
       };
 
       console.log('ExtrusionProductionForm - Submitting data:', submitData);
@@ -78,6 +86,11 @@ const ExtrusionProductionForm = ({ onComplete, onBack, machineData, initialData,
       <Paper elevation={3} sx={{ p: { xs: 2, md: 6 }, width: '100%', maxWidth: 1100, mt: 2 }}>
         <Typography variant="h4" gutterBottom fontWeight={700}>
           Stage 2: Extrusion Production
+          {initialData?.poNumber && initialData?.jobTitle && (
+            <span style={{ fontWeight: 400, fontSize: 22, marginLeft: 16 }}>
+              | {initialData.poNumber} - {initialData.jobTitle}
+            </span>
+          )}
         </Typography>
         {machineData && (
           <Typography variant="subtitle1" color="primary" gutterBottom>
@@ -216,6 +229,19 @@ const ExtrusionProductionForm = ({ onComplete, onBack, machineData, initialData,
                 onChange={handleChange}
                 disabled={loading}
               />
+            </Grid>
+            <Grid item xs={12}>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label="Date"
+                  value={formData.date}
+                  onChange={handleDateChange}
+                  disablePast
+                  renderInput={(params) => (
+                    <TextField {...params} fullWidth required disabled={loading} inputProps={{ ...params.inputProps, readOnly: true }} />
+                  )}
+                />
+              </LocalizationProvider>
             </Grid>
           </Grid>
           <Box sx={{ mt: 4, display: 'flex', justifyContent: 'space-between' }}>

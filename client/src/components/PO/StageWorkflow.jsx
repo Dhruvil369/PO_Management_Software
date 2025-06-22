@@ -96,29 +96,57 @@ const StageWorkflow = () => {
       console.log('Stage mapping:', { urlStage: stage, dbStage: dbStageName });
 
       if (editingMachine) {
-        // Convert FormData to regular object for PUT request
-        const dataObject = {};
+        // If editing and formData is FormData (has image), send as multipart/form-data
         if (formData instanceof FormData) {
-          for (let [key, value] of formData.entries()) {
-            dataObject[key] = value;
-          }
+          await axios.put(
+            `http://localhost:5000/api/pos/${poId}/machines/${editingMachine._id}/stages/${dbStageName}`,
+            formData,
+            {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+              },
+            }
+          );
         } else {
-          Object.assign(dataObject, formData);
-        }
-
-        console.log('Updating machine with data:', dataObject);
-
-        // Update existing machine - use database stage name
-        const response = await axios.put(
-          `http://localhost:5000/api/pos/${poId}/machines/${editingMachine._id}/stages/${dbStageName}`,
-          dataObject,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-            },
+          // Convert to FormData if stage is packaging and image exists
+          if (stage === 'packaging' && formData.image) {
+            const fd = new FormData();
+            Object.keys(formData).forEach(key => {
+              if (formData[key] !== null && formData[key] !== '') {
+                if (key === 'date' && formData[key]) {
+                  fd.append(key, new Date(formData[key]).toISOString());
+                } else {
+                  fd.append(key, formData[key]);
+                }
+              }
+            });
+            await axios.put(
+              `http://localhost:5000/api/pos/${poId}/machines/${editingMachine._id}/stages/${dbStageName}`,
+              fd,
+              {
+                headers: {
+                  'Content-Type': 'multipart/form-data',
+                },
+              }
+            );
+          } else {
+            // Fallback: send as JSON
+            const dataObject = { ...formData };
+            if (dataObject.date) {
+              dataObject.date = new Date(dataObject.date).toISOString();
+            }
+            await axios.put(
+              `http://localhost:5000/api/pos/${poId}/machines/${editingMachine._id}/stages/${dbStageName}`,
+              dataObject,
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+              }
+            );
           }
-        );
-        console.log('Machine updated successfully:', response.data);
+        }
+        console.log('Machine updated successfully');
       } else {
         // Add new machine - use URL stage name for route
         const response = await axios.post(
@@ -204,18 +232,24 @@ const StageWorkflow = () => {
   const renderStageForm = () => {
     // Get existing data for the stage being edited
     const getExistingData = () => {
-      if (!editingMachine) return null;
-
-      const stageDataMapping = {
-        'requirement': editingMachine.requirement,
-        'extrusion': editingMachine.extrusionProduction,
-        'printing': editingMachine.printing,
-        'cutting': editingMachine.cuttingSealing,
-        'punch': editingMachine.punch,
-        'packaging': editingMachine.packagingDispatch
+      let stageData = {};
+      if (editingMachine) {
+        const stageDataMapping = {
+          'requirement': editingMachine.requirement,
+          'extrusion': editingMachine.extrusionProduction,
+          'printing': editingMachine.printing,
+          'cutting': editingMachine.cuttingSealing,
+          'punch': editingMachine.punch,
+          'packaging': editingMachine.packagingDispatch
+        };
+        stageData = stageDataMapping[stage] || {};
+      }
+      // Always include poNumber and jobTitle from parent PO
+      return {
+        ...stageData,
+        poNumber: po?.poNumber,
+        jobTitle: po?.jobTitle
       };
-
-      return stageDataMapping[stage];
     };
 
     const commonProps = {
@@ -389,7 +423,7 @@ const StageWorkflow = () => {
                         })}
                       </Box>
                     </Box>
-                    {!allStagesCompleted && nextStage && (
+                    {!allStagesCompleted && nextStage && !po.isFinalized && (
                       <Button
                         variant="contained"
                         size="small"
@@ -428,12 +462,12 @@ const StageWorkflow = () => {
               size="large"
               sx={{ fontWeight: 600, px: 4, py: 1.5 }}
             >
-              Add Machine
+              {stage === 'requirement' ? 'Add Size' : 'Add Machine'}
             </Button>
           </Box>
         )}
 
-        {showAddForm && (
+        {showAddForm && !po.isFinalized && (
           <Box sx={{ mb: 4, maxWidth: 600, mx: 'auto', bgcolor: '#fff', p: 4, borderRadius: 3, boxShadow: 2 }}>
             <Typography variant="h6" gutterBottom>
               {editingMachine

@@ -14,8 +14,11 @@ import {
   IconButton,
   Alert,
   Chip,
-
-  CardActions
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  CardActions // <-- Added CardActions import
 } from '@mui/material';
 import { Add, Search, Logout, Edit, Visibility, GetApp } from '@mui/icons-material';
 import axios from 'axios';
@@ -26,6 +29,8 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [jobTitleDialogOpen, setJobTitleDialogOpen] = useState(false);
+  const [newJobTitle, setNewJobTitle] = useState('');
 
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -73,9 +78,19 @@ const Dashboard = () => {
   };
 
   const createNewPO = async () => {
+    setJobTitleDialogOpen(true);
+  };
+
+  const handleCreatePOWithJobTitle = async () => {
+    if (!newJobTitle.trim()) {
+      setError('Job title is required to create a new PO');
+      return;
+    }
     try {
-      const response = await axios.post('http://localhost:5000/api/pos/create');
+      const response = await axios.post('http://localhost:5000/api/pos/create', { jobTitle: newJobTitle });
       const newPO = response.data.po;
+      setJobTitleDialogOpen(false);
+      setNewJobTitle('');
       navigate(`/po/${newPO._id}/stage/requirement`);
     } catch (error) {
       console.error('Error creating PO:', error);
@@ -216,7 +231,7 @@ const Dashboard = () => {
                       <CardContent sx={{ flexGrow: 1 }}>
                         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                           <Typography variant="h6" component="h2" fontWeight={600}>
-                            {po.poNumber}
+                            {po.poNumber} {po.jobTitle && `- ${po.jobTitle}`}
                           </Typography>
                           <Chip
                             label={po.status === 'completed' ? 'Completed' : 'In Progress'}
@@ -245,7 +260,7 @@ const Dashboard = () => {
 
                       <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>
                         <Box>
-                          {po.currentStage !== 'completed' && (
+                          {po.currentStage !== 'completed' && !po.isFinalized ? (
                             <Button
                               size="small"
                               variant="contained"
@@ -257,6 +272,9 @@ const Dashboard = () => {
                             >
                               Edit
                             </Button>
+                          ) : (
+                            // Placeholder to maintain layout when Edit button is hidden
+                            <Box sx={{ height: 36, minWidth: 80 }} />
                           )}
                         </Box>
 
@@ -292,6 +310,25 @@ const Dashboard = () => {
               )}
             </Grid>
           )}
+
+          <Dialog open={jobTitleDialogOpen} onClose={() => setJobTitleDialogOpen(false)}>
+            <DialogTitle>Enter Job Title</DialogTitle>
+            <DialogContent>
+              <TextField
+                autoFocus
+                margin="dense"
+                label="Job Title"
+                fullWidth
+                value={newJobTitle}
+                onChange={e => setNewJobTitle(e.target.value)}
+                required
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setJobTitleDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleCreatePOWithJobTitle} variant="contained">Create PO</Button>
+            </DialogActions>
+          </Dialog>
         </Container>
       </Box>
     </>

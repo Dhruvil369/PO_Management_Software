@@ -8,15 +8,18 @@ import {
   Grid,
   Alert
 } from '@mui/material';
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
-const PrintingForm = ({ onComplete, onBack, machineData }) => {
+const PrintingForm = ({ onComplete, onBack, machineData, initialData }) => {
   const [formData, setFormData] = useState({
     machineNo: '',
     size: '',
     operatorName: '',
     noOfRolls: '',
     waste: '',
-    kgs: ''
+    kgs: '',
+    date: initialData?.date || null
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,6 +31,10 @@ const PrintingForm = ({ onComplete, onBack, machineData }) => {
       [name]: value
     }));
     setError('');
+  };
+
+  const handleDateChange = (newDate) => {
+    setFormData(prev => ({ ...prev, date: newDate }));
   };
 
   const handleSubmit = async (e) => {
@@ -43,7 +50,8 @@ const PrintingForm = ({ onComplete, onBack, machineData }) => {
         machineNo: formData.machineNo ? parseInt(formData.machineNo) : null,
         noOfRolls: formData.noOfRolls ? parseInt(formData.noOfRolls) : null,
         waste: formData.waste ? parseFloat(formData.waste) : null,
-        kgs: formData.kgs ? parseFloat(formData.kgs) : null
+        kgs: formData.kgs ? parseFloat(formData.kgs) : null,
+        date: formData.date ? new Date(formData.date).toISOString() : null // ensure date is sent as ISO string
       };
 
       console.log('PrintingForm - Submitting data:', submitData);
@@ -67,6 +75,11 @@ const PrintingForm = ({ onComplete, onBack, machineData }) => {
       <Paper elevation={3} sx={{ p: { xs: 2, md: 6 }, width: '100%', maxWidth: 1100, mt: 2 }}>
         <Typography variant="h4" gutterBottom fontWeight={700}>
           Stage 3: Printing
+          {initialData?.poNumber && initialData?.jobTitle && (
+            <span style={{ fontWeight: 400, fontSize: 22, marginLeft: 16 }}>
+              | {initialData.poNumber} - {initialData.jobTitle}
+            </span>
+          )}
         </Typography>
         {machineData && (
           <Typography variant="subtitle1" color="primary" gutterBottom>
@@ -143,6 +156,19 @@ const PrintingForm = ({ onComplete, onBack, machineData }) => {
                 onChange={handleChange}
                 disabled={loading}
               />
+            </Grid>
+            <Grid item xs={12}>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label="Date"
+                  value={formData.date}
+                  onChange={handleDateChange}
+                  disablePast
+                  renderInput={(params) => (
+                    <TextField {...params} fullWidth required disabled={loading} inputProps={{ ...params.inputProps, readOnly: true }} />
+                  )}
+                />
+              </LocalizationProvider>
             </Grid>
           </Grid>
           <Box sx={{ mt: 4, display: 'flex', justifyContent: 'space-between' }}>

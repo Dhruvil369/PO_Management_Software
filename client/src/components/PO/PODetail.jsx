@@ -138,16 +138,38 @@ const PODetail = () => {
     }
   };
 
-  const renderStageData = (data) => {
+  const renderStageData = (data, stageKey) => {
     if (!data) {
       return <Typography color="textSecondary">No data entered</Typography>;
     }
-
     return (
       <Grid container spacing={2}>
         {Object.entries(data).map(([key, value]) => {
           if (key === '_id' || value === null || value === '') return null;
-
+          if (key === 'image' && value) {
+            return (
+              <Grid item xs={12} key={key}>
+                <Typography variant="body2"><strong>Image:</strong></Typography>
+                <Box sx={{ mt: 1, mb: 2 }}>
+                  <img
+                    src={`http://localhost:5000/uploads/${value}`}
+                    alt="Stage Upload"
+                    style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, border: '1px solid #eee' }}
+                  />
+                </Box>
+              </Grid>
+            );
+          }
+          // Show both 'data' and 'date' fields as Date
+          if (key === 'data' || key === 'date') {
+            return (
+              <Grid item xs={12} sm={6} key={key}>
+                <Typography variant="body2">
+                  <strong>Date:</strong> {value ? new Date(value).toLocaleDateString() : ''}
+                </Typography>
+              </Grid>
+            );
+          }
           return (
             <Grid item xs={12} sm={6} key={key}>
               <Typography variant="body2">
@@ -159,8 +181,6 @@ const PODetail = () => {
       </Grid>
     );
   };
-
-
 
   const renderMachineAccordion = (machineNo) => {
     const machine = po?.machines.find(m => m.machineNo === machineNo);
@@ -241,7 +261,7 @@ const PODetail = () => {
                     </Box>
                   </AccordionSummary>
                   <AccordionDetails>
-                    {renderStageData(stage.data)}
+                    {renderStageData(stage.data, stage.key)}
                   </AccordionDetails>
                 </Accordion>
               ))}

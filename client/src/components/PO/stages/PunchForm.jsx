@@ -8,15 +8,18 @@ import {
   Grid,
   Alert
 } from '@mui/material';
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
-const PunchForm = ({ onComplete, onBack, machineData }) => {
+const PunchForm = ({ onComplete, onBack, machineData, initialData }) => {
   const [formData, setFormData] = useState({
     machineNo: '',
     bagSize: '',
     operatorName: '',
     punchName: '',
     kgs: '',
-    waste: ''
+    waste: '',
+    date: initialData?.date || null,
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,6 +31,10 @@ const PunchForm = ({ onComplete, onBack, machineData }) => {
       [name]: value
     }));
     setError('');
+  };
+
+  const handleDateChange = (newDate) => {
+    setFormData(prev => ({ ...prev, date: newDate }));
   };
 
   const handleSubmit = async (e) => {
@@ -42,7 +49,8 @@ const PunchForm = ({ onComplete, onBack, machineData }) => {
         ...formData,
         machineNo: formData.machineNo ? parseInt(formData.machineNo) : null,
         kgs: formData.kgs ? parseFloat(formData.kgs) : null,
-        waste: formData.waste ? parseFloat(formData.waste) : null
+        waste: formData.waste ? parseFloat(formData.waste) : null,
+        date: formData.date ? new Date(formData.date).toISOString() : null // ensure date is sent as ISO string
       };
 
       console.log('PunchForm - Submitting data:', submitData);
@@ -66,6 +74,11 @@ const PunchForm = ({ onComplete, onBack, machineData }) => {
       <Paper elevation={3} sx={{ p: { xs: 2, md: 6 }, width: '100%', maxWidth: 1100, mt: 2 }}>
         <Typography variant="h4" gutterBottom fontWeight={700}>
           Stage 5: Punch
+          {initialData?.poNumber && initialData?.jobTitle && (
+            <span style={{ fontWeight: 400, fontSize: 22, marginLeft: 16 }}>
+              | {initialData.poNumber} - {initialData.jobTitle}
+            </span>
+          )}
         </Typography>
         {machineData && (
           <Typography variant="subtitle1" color="primary" gutterBottom>
@@ -141,6 +154,19 @@ const PunchForm = ({ onComplete, onBack, machineData }) => {
                 onChange={handleChange}
                 disabled={loading}
               />
+            </Grid>
+            <Grid item xs={12}>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label="Date"
+                  value={formData.date}
+                  onChange={handleDateChange}
+                  disablePast
+                  renderInput={(params) => (
+                    <TextField {...params} fullWidth required disabled={loading} inputProps={{ ...params.inputProps, readOnly: true }} />
+                  )}
+                />
+              </LocalizationProvider>
             </Grid>
           </Grid>
           <Box sx={{ mt: 4, display: 'flex', justifyContent: 'space-between' }}>
