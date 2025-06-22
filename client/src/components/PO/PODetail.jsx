@@ -138,6 +138,24 @@ const PODetail = () => {
     }
   };
 
+  const handleDownloadChallanPDF = async (machine) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:5000/api/pos/${po._id}/machines/${machine._id}/challan-pdf`,
+        { responseType: 'blob' }
+      );
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Challan_${po.poNumber}_Machine${machine.machineNo}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      setError('Failed to download challan PDF');
+    }
+  };
+
   const renderStageData = (data, stageKey) => {
     if (!data) {
       return <Typography color="textSecondary">No data entered</Typography>;
@@ -236,6 +254,18 @@ const PODetail = () => {
         <AccordionDetails>
           {hasData ? (
             <Box>
+              {/* Show Download Challan PDF button if all stages completed and challanNo exists */}
+              {allStagesCompleted && machine?.packagingDispatch?.challanNo && (
+                <Button
+                  variant="contained"
+                  color="success"
+                  sx={{ mb: 2 }}
+                  startIcon={<GetApp />}
+                  onClick={() => handleDownloadChallanPDF(machine)}
+                >
+                  Download Challan PDF
+                </Button>
+              )}
               {stages.map((stage, index) => (
                 <Accordion key={stage.key} sx={{ mb: 1 }}>
                   <AccordionSummary expandIcon={<ExpandMore />}>
@@ -262,9 +292,29 @@ const PODetail = () => {
                   </AccordionSummary>
                   <AccordionDetails>
                     {renderStageData(stage.data, stage.key)}
+                    {/* Download Challan PDF button for Stage 6 */}
+                    {stage.key === 'packagingDispatch' && machine?.packagingDispatch?.challanNo && (
+                      <Button
+                        variant="contained"
+                        color="success"
+                        sx={{ mt: 2 }}
+                        startIcon={<GetApp />}
+                        onClick={() => handleDownloadChallanPDF(machine)}
+                      >
+                        Download Challan PDF
+                      </Button>
+                    )}
                   </AccordionDetails>
                 </Accordion>
               ))}
+
+              {/* DEBUG: Show completed stages and challanNo for troubleshooting */}
+              <Box sx={{ mb: 1, p: 1, background: '#f9f9f9', border: '1px dashed #ccc', borderRadius: 1 }}>
+                <Typography variant="caption" color="secondary">
+                  Completed Stages: {machine?.completedStages?.join(', ') || 'None'}<br/>
+                  Challan No: {machine?.packagingDispatch?.challanNo || 'N/A'}
+                </Typography>
+              </Box>
             </Box>
           ) : (
             <Typography color="textSecondary">

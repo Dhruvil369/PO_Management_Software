@@ -77,7 +77,7 @@ const packagingDispatchSchema = new mongoose.Schema({
     totalWeight: Number,
     noOfRolls: Number,
     noOfBags: Number,
-    challanNo: String,
+    challanNo: { type: Number, unique: true, sparse: true }, // auto-increment, unique
     date: Date, // <-- add date field
     image: String // File path for uploaded image
 });

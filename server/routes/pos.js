@@ -213,7 +213,14 @@ router.post('/:id/machines/:stage', auth, upload.single('image'), async(req, res
             };
             machineEntry.completedStages.push('requirement');
         } else if (stage === 'packaging') {
-            const { size, totalWeight, noOfRolls, noOfBags, challanNo, date } = req.body;
+            const { size, totalWeight, noOfRolls, noOfBags, date } = req.body;
+            // Generate challanNo if not present
+            let challanNo = null;
+            const Counter = require('../models/Counter');
+            const counter = await Counter.findByIdAndUpdate(
+                'challan_sequence', { $inc: { sequence_value: 1 } }, { new: true, upsert: true }
+            );
+            challanNo = counter.sequence_value;
             machineEntry.packagingDispatch = {
                 size,
                 totalWeight: totalWeight ? parseFloat(totalWeight) : null,
@@ -241,6 +248,7 @@ router.post('/:id/machines/:stage', auth, upload.single('image'), async(req, res
         res.status(201).json({
             message: 'Machine added successfully',
             machine: savedMachine,
+            challanNo: savedMachine.packagingDispatch ? .challanNo,
             po: {
                 currentStage: po.currentStage,
                 currentStageDisplay: po.getStageDisplayName(po.currentStage)
@@ -340,6 +348,18 @@ router.put('/:poId/machines/:machineId/stages/:stage', auth, upload.single('imag
 
         console.log('Updated completedStages:', machine.completedStages);
 
+        // Ensure challanNo is generated for packagingDispatch if missing
+        if (dbStageName === 'packagingDispatch') {
+            if (!machine.packagingDispatch) machine.packagingDispatch = {};
+            if (!machine.packagingDispatch.challanNo) {
+                const Counter = require('../models/Counter');
+                const counter = await Counter.findByIdAndUpdate(
+                    'challan_sequence', { $inc: { sequence_value: 1 } }, { new: true, upsert: true }
+                );
+                machine.packagingDispatch.challanNo = counter.sequence_value;
+            }
+        }
+
         // Check if all machines for current stage are completed
         const allMachinesCompleted = po.machines.every(m => m.completedStages.includes(dbStageName));
 
@@ -351,6 +371,7 @@ router.put('/:poId/machines/:machineId/stages/:stage', auth, upload.single('imag
         res.json({
             message: 'Stage updated successfully',
             machine,
+            challanNo: machine.packagingDispatch ? .challanNo,
             allMachinesCompleted,
             po: {
                 currentStage: po.currentStage,
@@ -663,6 +684,91 @@ router.get('/:id/pdf', auth, async(req, res) => {
     } catch (error) {
         console.error('Generate PDF error:', error);
         res.status(500).json({ message: 'Failed to generate PDF' });
+    }
+});
+
+// Generate and download challan PDF for a machine
+router.get('/:poId/machines/:machineId/challan-pdf', auth, async(req, res) => {
+    try {
+        const { poId, machineId } = req.params;
+        const po = await PO.findOne({ _id: poId, createdBy: req.user._id });
+        if (!po) return res.status(404).json({ message: 'PO not found' });
+        const machine = po.machines.id(machineId);
+        if (!machine) return res.status(404).json({ message: 'Machine not found' });
+        const stage6 = machine.packagingDispatch;
+        if (!stage6 || !stage6.challanNo) return res.status(400).json({ message: 'Challan not available for this machine' });
+
+        // PDF generation
+        const doc = new PDFDocument({ margin: 40 });
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=Challan-${stage6.challanNo}.pdf`);
+        doc.pipe(res);
+
+        // --- HEADER ---
+        doc.font('Helvetica-Bold').fontSize(20).text('DELIVERY CHALLAN', { align: 'center' });
+        doc.moveDown(0.2);
+        doc.font('Helvetica-Bold').fontSize(14).text('ATHARVA BIO PRODUCTS', { align: 'center' });
+        doc.font('Helvetica').fontSize(10).text('Mobile: (+91) 9428840130', { align: 'center' });
+        doc.text('18, Navkar Estate, B/H. GEB Station, Santej,', { align: 'center' });
+        doc.text('Gandhinagar - 382721', { align: 'center' });
+        doc.text('GST IN: 24AUCPP6453C1ZU', { align: 'center' });
+        doc.moveDown(0.8);
+        // --- PO INFO BLOCK ---
+        const infoStartY = doc.y;
+        doc.font('Helvetica').fontSize(11);
+        doc.text(`M/S: ${po.jobTitle || ''}`, 40, infoStartY, { continued: true });
+        doc.text(`D.C. NO.: ${stage6.challanNo}`, 350, infoStartY);
+        doc.text('', 40, doc.y); // new line
+        doc.text('', 40, doc.y, { continued: true });
+        doc.text(`DATE    : ${stage6.date ? new Date(stage6.date).toLocaleDateString() : ''}`, 350, doc.y);
+        doc.text('', 40, doc.y); // new line
+        doc.text('', 40, doc.y, { continued: true });
+        doc.text(`P.O. NO.: ${po.poNumber || ''}`, 350, doc.y);
+        doc.moveDown(0.5);
+        // --- CONSIGNEE & TRANSPORT ---
+        doc.text("CONSIGNEE'S GSTIN: _____________________________", 40, doc.y);
+        doc.text('TRANSPORT MODE   : _____________________________', 40, doc.y);
+        doc.moveDown(1);
+        // --- TABLE ---
+        const tableTop = doc.y;
+        const colX = [40, 90, 270, 350, 420, 520];
+        const rowHeight = 22;
+        // Table header background
+        doc.rect(colX[0], tableTop, colX[5] - colX[0], rowHeight).fillAndStroke('#f0f0f0', '#000');
+        doc.fillColor('#000').font('Helvetica-Bold').fontSize(11);
+        doc.text('Sr No.', colX[0], tableTop + 6, { width: colX[1] - colX[0], align: 'center' });
+        doc.text('Description of Goods', colX[1], tableTop + 6, { width: colX[2] - colX[1], align: 'center' });
+        doc.text('Qty (Kg)', colX[2], tableTop + 6, { width: colX[3] - colX[2], align: 'center' });
+        doc.text('Rate', colX[3], tableTop + 6, { width: colX[4] - colX[3], align: 'center' });
+        doc.text('Amount', colX[4], tableTop + 6, { width: colX[5] - colX[4], align: 'center' });
+        // Table row
+        doc.font('Helvetica').fontSize(11).fillColor('#000');
+        const rowY = tableTop + rowHeight;
+        doc.rect(colX[0], rowY, colX[5] - colX[0], rowHeight).stroke();
+        doc.text('1', colX[0], rowY + 6, { width: colX[1] - colX[0], align: 'center' });
+        doc.text(`${stage6.size || ''} - ${stage6.noOfBags || ''} Bags`, colX[1], rowY + 6, { width: colX[2] - colX[1], align: 'center' });
+        doc.text(stage6.totalWeight != null ? stage6.totalWeight : '', colX[2], rowY + 6, { width: colX[3] - colX[2], align: 'center' });
+        doc.text('', colX[3], rowY + 6, { width: colX[4] - colX[3], align: 'center' });
+        doc.text('', colX[4], rowY + 6, { width: colX[5] - colX[4], align: 'center' });
+        // Draw vertical lines for columns (header + row)
+        for (let i = 1; i < colX.length - 1; i++) {
+            doc.moveTo(colX[i], tableTop).lineTo(colX[i], rowY + rowHeight).stroke();
+        }
+        // Draw horizontal lines (bottom of header, bottom of row)
+        doc.moveTo(colX[0], tableTop + rowHeight).lineTo(colX[5], tableTop + rowHeight).stroke();
+        doc.moveTo(colX[0], rowY + rowHeight).lineTo(colX[5], rowY + rowHeight).stroke();
+        doc.moveDown(3);
+        // --- FOOTER ---
+        doc.font('Helvetica').fontSize(11);
+        doc.text('We have Received the above Goods in Order & Good Condition.', 40, doc.y);
+        doc.moveDown(2);
+        doc.text("Receiver's Signature", 40, doc.y);
+        doc.text('FOR, ATHARVA BIO PRODUCTS', 350, doc.y);
+
+        doc.end();
+    } catch (error) {
+        console.error('Challan PDF error:', error);
+        res.status(500).json({ message: 'Failed to generate challan PDF' });
     }
 });
 

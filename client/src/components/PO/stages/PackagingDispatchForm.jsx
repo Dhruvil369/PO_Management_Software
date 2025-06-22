@@ -18,10 +18,10 @@ const PackagingDispatchForm = ({ onComplete, onBack, machineData, initialData })
     totalWeight: '',
     noOfRolls: '',
     noOfBags: '',
-    challanNo: '',
     date: initialData?.date || null,
     image: null
   });
+  const [challanNo, setChallanNo] = useState(initialData?.challanNo || '');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -82,7 +82,10 @@ const PackagingDispatchForm = ({ onComplete, onBack, machineData, initialData })
         };
       }
       if (onComplete) {
-        await onComplete(submitData);
+        const result = await onComplete(submitData);
+        if (result && result.challanNo) {
+          setChallanNo(result.challanNo);
+        }
       } else {
         throw new Error('onComplete function not provided');
       }
@@ -160,16 +163,6 @@ const PackagingDispatchForm = ({ onComplete, onBack, machineData, initialData })
               />
             </Grid>
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Challan No."
-                name="challanNo"
-                value={formData.challanNo}
-                onChange={handleChange}
-                disabled={loading}
-              />
-            </Grid>
-            <Grid item xs={12}>
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
                   label="Date"
@@ -212,7 +205,7 @@ const PackagingDispatchForm = ({ onComplete, onBack, machineData, initialData })
               </Box>
             </Grid>
           </Grid>
-          <Box sx={{ mt: 4, display: 'flex', justifyContent: 'space-between' }}>
+          <Box sx={{ mt: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Button
               variant="outlined"
               onClick={onBack}
@@ -222,15 +215,24 @@ const PackagingDispatchForm = ({ onComplete, onBack, machineData, initialData })
             >
               Back
             </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={loading}
-              size="large"
-              sx={{ minWidth: 180, fontWeight: 600 }}
-            >
-              {loading ? 'Saving...' : 'Complete Machine Entry'}
-            </Button>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              {challanNo && (
+                <Box sx={{ p: 1.5, background: '#f5f5f5', borderRadius: 1, border: '1px solid #e0e0e0', minWidth: 120 }}>
+                  <Typography variant="subtitle2" color="success.main" sx={{ textAlign: 'center' }}>
+                    Challan No.: <b>{challanNo}</b>
+                  </Typography>
+                </Box>
+              )}
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={loading}
+                size="large"
+                sx={{ minWidth: 180, fontWeight: 600 }}
+              >
+                {loading ? 'Saving...' : 'Complete Machine Entry'}
+              </Button>
+            </Box>
           </Box>
         </Box>
       </Paper>
