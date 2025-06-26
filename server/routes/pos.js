@@ -659,7 +659,7 @@ router.get('/:id/pdf', auth, async(req, res) => {
 
                     // Find machine data
                     const machine = po.machines.find(m => m.machineNo === machineNo);
-                    let cellValue = 'N/A';
+                    let cellValue = '-'; // Changed from 'N/A' to '-'
 
                     if (machine && machine[stage.dataKey]) {
                         const stageData = machine[stage.dataKey];
