@@ -75,6 +75,18 @@ app.get('/', (req, res) => {
     res.json({ message: 'PO Management System API' });
 });
 
+// Handle preflight requests for all routes
+app.options('*', cors({
+    origin: [
+        'http://localhost:3000',
+        'https://po-management-software.onrender.com',
+        'https://po-management-software.vercel.app'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
