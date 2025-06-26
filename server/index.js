@@ -43,6 +43,7 @@ app.use(cors({
             'https://po-management-software.vercel.app'],
     credentials: true
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -75,7 +76,6 @@ app.get('/', (req, res) => {
     res.json({ message: 'PO Management System API' });
 });
 
-// Handle preflight requests for all routes
 app.options('*', cors({
     origin: [
         'http://localhost:3000',
