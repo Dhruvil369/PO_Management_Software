@@ -20,7 +20,7 @@ const io = new Server(server, {
         origin: ['http://localhost:3000',
             'https://po-management-software.onrender.com',
             'https://po-management-software.vercel.app'],
-        methods: ['GET', 'POST'],
+       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         credentials: true
     }
 });
