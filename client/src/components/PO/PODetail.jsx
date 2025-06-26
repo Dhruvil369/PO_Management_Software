@@ -27,15 +27,28 @@ import {
   Edit
 } from '@mui/icons-material';
 import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
+import RequirementForm from './stages/RequirementForm';
+import ExtrusionProductionForm from './stages/ExtrusionProductionForm';
+import PrintingForm from './stages/PrintingForm';
+import CuttingSealingForm from './stages/CuttingSealingForm';
+import PunchForm from './stages/PunchForm';
+import PackagingDispatchForm from './stages/PackagingDispatchForm';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 
 const PODetail = () => {
   const { poId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth(); // Use context for user role
 
   const [po, setPO] = useState(null);
   const [availableMachines, setAvailableMachines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [editModal, setEditModal] = useState({ open: false, stageKey: '', machine: null });
 
   useEffect(() => {
     fetchPOData();
@@ -276,14 +289,29 @@ const PODetail = () => {
                           {index + 1}. {stage.label}
                         </Typography>
                       </Box>
-                      {machine?.completedStages?.includes(stage.key) && (
-                        <Chip
-                          label="Completed"
-                          size="small"
-                          color="success"
-                          variant="outlined"
-                        />
-                      )}
+                      <Box display="flex" alignItems="center" gap={1}>
+                        {machine?.completedStages?.includes(stage.key) && (
+                          <Chip
+                            label="Completed"
+                            size="small"
+                            color="success"
+                            variant="outlined"
+                            sx={{ fontWeight: 600 }}
+                          />
+                        )}
+                        {/* Admin-only Edit button for completed stages */}
+                        {user?.role === 'admin' && machine?.completedStages?.includes(stage.key) && (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="primary"
+                            onClick={() => setEditModal({ open: true, stageKey: stage.key, machine })}
+                            sx={{ ml: 0.5, textTransform: 'none', fontWeight: 600 }}
+                          >
+                            Edit
+                          </Button>
+                        )}
+                      </Box>
                     </Box>
                   </AccordionSummary>
                   <AccordionDetails>
@@ -429,6 +457,116 @@ const PODetail = () => {
           {[1, 2, 3, 4, 5, 6].map(machineNo => renderMachineAccordion(machineNo))}
         </Box>
       </Container>
+
+      {/* --- Edit Modal for Stage --- */}
+      <Dialog open={editModal.open} onClose={() => setEditModal({ open: false, stageKey: '', machine: null })} maxWidth="md" fullWidth>
+        <DialogTitle>Edit {(() => {
+          switch (editModal.stageKey) {
+            case 'requirement': return 'Requirement';
+            case 'extrusionProduction': return 'Extrusion Production';
+            case 'printing': return 'Printing';
+            case 'cuttingSealing': return 'Cutting & Sealing';
+            case 'punch': return 'Punch';
+            case 'packagingDispatch': return 'Packaging & Dispatch';
+            default: return '';
+          }
+        })()} for Machine {editModal.machine?.machineNo}</DialogTitle>
+        <DialogContent>
+          {editModal.open && editModal.machine && (() => {
+            const stageDataMapping = {
+              'requirement': editModal.machine.requirement,
+              'extrusionProduction': editModal.machine.extrusionProduction,
+              'printing': editModal.machine.printing,
+              'cuttingSealing': editModal.machine.cuttingSealing,
+              'punch': editModal.machine.punch,
+              'packagingDispatch': editModal.machine.packagingDispatch
+            };
+            const initialData = {
+              ...stageDataMapping[editModal.stageKey],
+              poNumber: po?.poNumber,
+              jobTitle: po?.jobTitle
+            };
+            const commonProps = {
+              onComplete: async (formData) => {
+                try {
+                  const stageMapping = {
+                    'requirement': 'requirement',
+                    'extrusionProduction': 'extrusionProduction',
+                    'printing': 'printing',
+                    'cuttingSealing': 'cuttingSealing',
+                    'punch': 'punch',
+                    'packagingDispatch': 'packagingDispatch'
+                  };
+                  const dbStageName = stageMapping[editModal.stageKey];
+                  if (formData instanceof FormData) {
+                    await axios.put(
+                      `http://localhost:5000/api/pos/${po._id}/machines/${editModal.machine._id}/stages/${dbStageName}`,
+                      formData,
+                      { headers: { 'Content-Type': 'multipart/form-data' } }
+                    );
+                  } else {
+                    if (editModal.stageKey === 'packagingDispatch' && formData.image) {
+                      const fd = new FormData();
+                      Object.keys(formData).forEach(key => {
+                        if (formData[key] !== null && formData[key] !== '') {
+                          if (key === 'date' && formData[key]) {
+                            fd.append(key, new Date(formData[key]).toISOString());
+                          } else {
+                            fd.append(key, formData[key]);
+                          }
+                        }
+                      });
+                      await axios.put(
+                        `http://localhost:5000/api/pos/${po._id}/machines/${editModal.machine._id}/stages/${dbStageName}`,
+                        fd,
+                        { headers: { 'Content-Type': 'multipart/form-data' } }
+                      );
+                    } else {
+                      const dataObject = { ...formData };
+                      if (dataObject.date) {
+                        dataObject.date = new Date(dataObject.date).toISOString();
+                      }
+                      await axios.put(
+                        `http://localhost:5000/api/pos/${po._id}/machines/${editModal.machine._id}/stages/${dbStageName}`,
+                        dataObject,
+                        { headers: { 'Content-Type': 'application/json' } }
+                      );
+                    }
+                  }
+                  await fetchPOData();
+                  setEditModal({ open: false, stageKey: '', machine: null });
+                } catch (error) {
+                  setError('Failed to update: ' + (error.response?.data?.message || error.message));
+                }
+              },
+              availableMachines: [editModal.machine.machineNo],
+              initialData,
+              isEditing: true,
+              machineNo: editModal.machine.machineNo,
+              updateButtonLabel: 'Update'
+            };
+            switch (editModal.stageKey) {
+              case 'requirement':
+                return <RequirementForm {...commonProps} />;
+              case 'extrusionProduction':
+                return <ExtrusionProductionForm {...commonProps} />;
+              case 'printing':
+                return <PrintingForm {...commonProps} />;
+              case 'cuttingSealing':
+                return <CuttingSealingForm {...commonProps} />;
+              case 'punch':
+                return <PunchForm {...commonProps} />;
+              case 'packagingDispatch':
+                return <PackagingDispatchForm {...commonProps} />;
+              default:
+                return <Typography>Invalid stage</Typography>;
+            }
+          })()}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditModal({ open: false, stageKey: '', machine: null })} color="secondary">Cancel</Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

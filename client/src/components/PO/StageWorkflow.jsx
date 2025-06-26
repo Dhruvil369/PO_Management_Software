@@ -424,51 +424,30 @@ const StageWorkflow = () => {
                       <Typography variant="caption" color="textSecondary">
                         Progress:
                       </Typography>
-  {[
-    { key: 'requirement', route: 'requirement' },
-    { key: 'extrusionProduction', route: 'extrusion' },
-    { key: 'printing', route: 'printing' },
-    { key: 'cuttingSealing', route: 'cutting' },
-    { key: 'punch', route: 'punch' },
-    { key: 'packagingDispatch', route: 'packaging' }
-  ].map(({ key, route }) => {
-    const isCompleted = machine.completedStages.includes(key);
-    const stageDisplayNames = {
-      'requirement': 'Req',
-      'extrusionProduction': 'Ext',
-      'printing': 'Print',
-      'cuttingSealing': 'Cut',
-      'punch': 'Punch',
-      'packagingDispatch': 'Pack'
-    };
-    return (
-      <Box key={key} sx={{ display: 'flex', alignItems: 'center', mr: 1 }}>
-        <Chip
-          label={stageDisplayNames[key]}
-          size="small"
-          color={isCompleted ? 'success' : 'default'}
-          variant={isCompleted ? 'filled' : 'outlined'}
-          sx={{ fontSize: '0.7rem', height: 20 }}
-        />
-        {/* Admin-only Edit button for each stage */}
-        {user?.role === 'admin' && machine[key] && (
-          <IconButton
-            size="small"
-            aria-label={`Edit ${stageDisplayNames[key]}`}
-            onClick={() => {
-              setEditingMachine(machine);
-              setShowAddForm(true);
-              navigate(`/po/${poId}/stage/${route}?machineId=${machine._id}`);
-            }}
-            sx={{ ml: 0.2 }}
-          >
-            <Edit fontSize="inherit" />
-          </IconButton>
-        )}
-      </Box>
-    );
-  })}
-</Box>
+  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                        {['requirement', 'extrusionProduction', 'printing', 'cuttingSealing', 'punch', 'packagingDispatch'].map(stageName => {
+                          const isCompleted = machine.completedStages.includes(stageName);
+                          const stageDisplayNames = {
+                            'requirement': 'Req',
+                            'extrusionProduction': 'Ext',
+                            'printing': 'Print',
+                            'cuttingSealing': 'Cut',
+                            'punch': 'Punch',
+                            'packagingDispatch': 'Pack'
+                          };
+                          return (
+                            <Chip
+                              key={stageName}
+                              label={stageDisplayNames[stageName]}
+                              size="small"
+                              color={isCompleted ? 'success' : 'default'}
+                              variant={isCompleted ? 'filled' : 'outlined'}
+                              sx={{ fontSize: '0.7rem', height: 20 }}
+                            />
+                          );
+                        })}
+                      </Box>
+                    </Box>
                
                     {!allStagesCompleted && nextStage && !po.isFinalized && (
                       <Button
