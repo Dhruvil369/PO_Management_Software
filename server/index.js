@@ -17,7 +17,9 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: ['http://localhost:3000', 'https://po-management-software.vercel.app/','https://po-management-software.vercel.app/'],
+        origin: ['http://localhost:3000',
+            'https://po-management-software.onrender.com',
+            'https://po-management-software.vercel.app'],
         methods: ['GET', 'POST'],
         credentials: true
     }
@@ -36,7 +38,9 @@ app.set('io', io);
 
 // Middleware
 app.use(cors({
-    origin:  ['http://localhost:3000', 'https://po-management-software.vercel.app/','https://po-management-software.vercel.app/'],
+    origin:  ['http://localhost:3000',
+            'https://po-management-software.onrender.com',
+            'https://po-management-software.vercel.app'],
     credentials: true
 }));
 app.use(express.json());
