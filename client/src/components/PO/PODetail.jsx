@@ -233,25 +233,21 @@ const PODetail = () => {
                 <Chip label="Not Configured" color="default" size="small" />
               )}
             </Box>
-
-            {/* Edit button for machine */}
-            {hasData && !allStagesCompleted && nextStage && (
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<Edit />}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleEditMachine(machine);
-                }}
-                sx={{ ml: 2 }}
-              >
-                Continue: {nextStage.route.charAt(0).toUpperCase() + nextStage.route.slice(1)}
-              </Button>
-            )}
           </Box>
         </AccordionSummary>
         <AccordionDetails>
+          {/* Edit button for machine - moved here to avoid nested button error */}
+          {hasData && !allStagesCompleted && nextStage && (
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<Edit />}
+              onClick={() => handleEditMachine(machine)}
+              sx={{ mb: 2 }}
+            >
+              Continue: {nextStage.route.charAt(0).toUpperCase() + nextStage.route.slice(1)}
+            </Button>
+          )}
           {hasData ? (
             <Box>
               {/* Show Download Challan PDF button if all stages completed and challanNo exists */}

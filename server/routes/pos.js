@@ -66,6 +66,10 @@ router.post('/create', auth, async(req, res) => {
             status: 'draft'
         });
         await newPO.save();
+
+        // Emit event to all employees
+        const io = req.app.get('io');
+        io.emit('po_created', { po: newPO });
         res.status(201).json({
             message: 'PO created successfully',
             po: newPO
@@ -107,18 +111,25 @@ router.get('/', auth, async(req, res) => {
     }
 });
 
-// Get specific PO by ID
+// Get all POs (Admin and Employee)
+router.get('/all', auth, async(req, res) => {
+    try {
+        // Admin: get all POs, Employee: get all POs (customize as needed)
+        const pos = await PO.find().sort({ createdAt: -1 });
+        res.json(pos);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch all POs' });
+    }
+});
+
+// Get specific PO by ID (Admin or Employee can view any PO)
 router.get('/:id', auth, async(req, res) => {
     try {
-        const po = await PO.findOne({
-            _id: req.params.id,
-            createdBy: req.user._id
-        });
-
+        // Remove createdBy filter so any authenticated user can view any PO
+        const po = await PO.findOne({ _id: req.params.id });
         if (!po) {
             return res.status(404).json({ message: 'PO not found' });
         }
-
         res.json(po);
     } catch (error) {
         console.error('Get PO error:', error);
@@ -126,21 +137,16 @@ router.get('/:id', auth, async(req, res) => {
     }
 });
 
-// Get available machine numbers for a PO
+// Get available machine numbers for a PO (Admin or Employee can view any PO)
 router.get('/:id/available-machines', auth, async(req, res) => {
     try {
-        const po = await PO.findOne({
-            _id: req.params.id,
-            createdBy: req.user._id
-        });
-
+        // Remove createdBy filter so any authenticated user can view available machines
+        const po = await PO.findOne({ _id: req.params.id });
         if (!po) {
             return res.status(404).json({ message: 'PO not found' });
         }
-
         const availableMachines = po.getAvailableMachineNumbers();
         const canAddMore = po.canAddMoreMachines();
-
         res.json({
             availableMachines,
             canAddMore,
@@ -245,6 +251,10 @@ router.post('/:id/machines/:stage', auth, upload.single('image'), async(req, res
         const savedMachine = po.machines[po.machines.length - 1];
         console.log('Machine saved successfully:', savedMachine);
 
+        // After updating PO, emit event to all admins
+        const io = req.app.get('io');
+        io.emit('po_updated', { poId: req.params.id });
+
         res.status(201).json({
             message: 'Machine added successfully',
             machine: savedMachine,
@@ -283,10 +293,8 @@ router.put('/:poId/machines/:machineId/stages/:stage', auth, upload.single('imag
         const dbStageName = stageMapping[stage] || stage;
         console.log('Stage mapping:', { urlStage: stage, dbStage: dbStageName });
 
-        const po = await PO.findOne({
-            _id: poId,
-            createdBy: req.user._id
-        });
+        // Remove createdBy filter so any authenticated user can update any PO's machine stage
+        const po = await PO.findOne({ _id: poId });
 
         if (!po) {
             console.log('PO not found for update');
@@ -368,6 +376,10 @@ router.put('/:poId/machines/:machineId/stages/:stage', auth, upload.single('imag
         console.log('Machine stage updated successfully');
         console.log('Final machine completedStages:', machine.completedStages);
 
+        // After updating PO, emit event to all admins
+        const io = req.app.get('io');
+        io.emit('po_updated', { poId });
+
         res.json({
             message: 'Stage updated successfully',
             machine,
@@ -420,6 +432,10 @@ router.put('/:poId/machines/:machineId/complete-stage/:stage', auth, async(req, 
         await po.save();
 
         console.log('Machine stage completed successfully');
+
+        // After updating PO, emit event to all admins
+        const io = req.app.get('io');
+        io.emit('po_updated', { poId });
 
         res.json({
             message: 'Machine stage completed successfully',

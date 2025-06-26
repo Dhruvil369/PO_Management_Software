@@ -8,15 +8,19 @@ const router = express.Router();
 // Register
 router.post('/register', async(req, res) => {
     try {
-        const { username, password } = req.body;
+        const { username, password, role } = req.body;
 
         // Validation
-        if (!username || !password) {
-            return res.status(400).json({ message: 'Username and password are required' });
+        if (!username || !password || !role) {
+            return res.status(400).json({ message: 'Username, password, and role are required' });
         }
 
         if (password.length < 6) {
             return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+        }
+
+        if (!['admin', 'employee'].includes(role)) {
+            return res.status(400).json({ message: 'Role must be either admin or employee' });
         }
 
         // Check if user already exists
@@ -26,11 +30,11 @@ router.post('/register', async(req, res) => {
         }
 
         // Create new user
-        const user = new User({ username, password });
+        const user = new User({ username, password, role });
         await user.save();
 
         // Generate JWT token
-        const token = jwt.sign({ userId: user._id },
+        const token = jwt.sign({ userId: user._id, role: user.role },
             process.env.JWT_SECRET, { expiresIn: '7d' }
         );
 
@@ -39,7 +43,8 @@ router.post('/register', async(req, res) => {
             token,
             user: {
                 id: user._id,
-                username: user.username
+                username: user.username,
+                role: user.role
             }
         });
     } catch (error) {
@@ -71,7 +76,7 @@ router.post('/login', async(req, res) => {
         }
 
         // Generate JWT token
-        const token = jwt.sign({ userId: user._id },
+        const token = jwt.sign({ userId: user._id, role: user.role },
             process.env.JWT_SECRET, { expiresIn: '7d' }
         );
 
@@ -80,7 +85,8 @@ router.post('/login', async(req, res) => {
             token,
             user: {
                 id: user._id,
-                username: user.username
+                username: user.username,
+                role: user.role
             }
         });
     } catch (error) {
@@ -95,7 +101,8 @@ router.get('/me', auth, async(req, res) => {
         res.json({
             user: {
                 id: req.user._id,
-                username: req.user.username
+                username: req.user.username,
+                role: req.user.role
             }
         });
     } catch (error) {

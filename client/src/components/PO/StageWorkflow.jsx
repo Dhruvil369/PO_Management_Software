@@ -17,6 +17,8 @@ import {
 } from '@mui/material';
 import { ArrowBack, Add, CheckCircle, RadioButtonUnchecked, Edit } from '@mui/icons-material';
 import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
+import socket from '../../socket';
 
 // Import stage components
 import RequirementForm from './stages/RequirementForm';
@@ -31,6 +33,7 @@ const StageWorkflow = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const machineIdFromUrl = searchParams.get('machineId');
+  const { user } = useAuth();
 
   const [po, setPO] = useState(null);
   const [availableMachines, setAvailableMachines] = useState([]);
@@ -56,6 +59,28 @@ const StageWorkflow = () => {
     }
   }, [machineIdFromUrl, po]);
 
+  useEffect(() => {
+    // Listen for real-time PO updates
+    socket.on('po_updated', (data) => {
+      if (data.poId === poId) {
+        fetchPOData();
+        fetchAvailableMachines();
+      }
+    });
+    return () => {
+      socket.off('po_updated');
+    };
+  }, [poId]);
+
+  useEffect(() => {
+  if (machineIdFromUrl && po) {
+    const machine = po.machines.find(m => m._id === machineIdFromUrl);
+    if (machine) {
+      setEditingMachine(machine);
+      setShowAddForm(true);
+    }
+  }
+}, [machineIdFromUrl, po, stage]); // <-- add stage here
   const fetchPOData = async () => {
     try {
       const response = await axios.get(`http://localhost:5000/api/pos/${poId}`);
@@ -399,30 +424,52 @@ const StageWorkflow = () => {
                       <Typography variant="caption" color="textSecondary">
                         Progress:
                       </Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-                        {['requirement', 'extrusionProduction', 'printing', 'cuttingSealing', 'punch', 'packagingDispatch'].map(stageName => {
-                          const isCompleted = machine.completedStages.includes(stageName);
-                          const stageDisplayNames = {
-                            'requirement': 'Req',
-                            'extrusionProduction': 'Ext',
-                            'printing': 'Print',
-                            'cuttingSealing': 'Cut',
-                            'punch': 'Punch',
-                            'packagingDispatch': 'Pack'
-                          };
-                          return (
-                            <Chip
-                              key={stageName}
-                              label={stageDisplayNames[stageName]}
-                              size="small"
-                              color={isCompleted ? 'success' : 'default'}
-                              variant={isCompleted ? 'filled' : 'outlined'}
-                              sx={{ fontSize: '0.7rem', height: 20 }}
-                            />
-                          );
-                        })}
-                      </Box>
-                    </Box>
+  {[
+    { key: 'requirement', route: 'requirement' },
+    { key: 'extrusionProduction', route: 'extrusion' },
+    { key: 'printing', route: 'printing' },
+    { key: 'cuttingSealing', route: 'cutting' },
+    { key: 'punch', route: 'punch' },
+    { key: 'packagingDispatch', route: 'packaging' }
+  ].map(({ key, route }) => {
+    const isCompleted = machine.completedStages.includes(key);
+    const stageDisplayNames = {
+      'requirement': 'Req',
+      'extrusionProduction': 'Ext',
+      'printing': 'Print',
+      'cuttingSealing': 'Cut',
+      'punch': 'Punch',
+      'packagingDispatch': 'Pack'
+    };
+    return (
+      <Box key={key} sx={{ display: 'flex', alignItems: 'center', mr: 1 }}>
+        <Chip
+          label={stageDisplayNames[key]}
+          size="small"
+          color={isCompleted ? 'success' : 'default'}
+          variant={isCompleted ? 'filled' : 'outlined'}
+          sx={{ fontSize: '0.7rem', height: 20 }}
+        />
+        {/* Admin-only Edit button for each stage */}
+        {user?.role === 'admin' && machine[key] && (
+          <IconButton
+            size="small"
+            aria-label={`Edit ${stageDisplayNames[key]}`}
+            onClick={() => {
+              setEditingMachine(machine);
+              setShowAddForm(true);
+              navigate(`/po/${poId}/stage/${route}?machineId=${machine._id}`);
+            }}
+            sx={{ ml: 0.2 }}
+          >
+            <Edit fontSize="inherit" />
+          </IconButton>
+        )}
+      </Box>
+    );
+  })}
+</Box>
+               
                     {!allStagesCompleted && nextStage && !po.isFinalized && (
                       <Button
                         variant="contained"
@@ -454,17 +501,20 @@ const StageWorkflow = () => {
         </Grid>
 
         {availableMachines.length > 0 && !showAddForm && (
-          <Box sx={{ mb: 4 }}>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => setShowAddForm(true)}
-              size="large"
-              sx={{ fontWeight: 600, px: 4, py: 1.5 }}
-            >
-              {stage === 'requirement' ? 'Add Size' : 'Add Machine'}
-            </Button>
-          </Box>
+          // Only show Add Size/Add Machine button for admin in stage 1 (requirement)
+          (stage !== 'requirement' || (user?.role === 'admin' && stage === 'requirement')) && (
+            <Box sx={{ mb: 4 }}>
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => setShowAddForm(true)}
+                size="large"
+                sx={{ fontWeight: 600, px: 4, py: 1.5 }}
+              >
+                {stage === 'requirement' ? 'Add Size' : 'Add Machine'}
+              </Button>
+            </Box>
+          )
         )}
 
         {showAddForm && !po.isFinalized && (

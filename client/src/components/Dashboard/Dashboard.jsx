@@ -23,6 +23,7 @@ import {
 import { Add, Search, Logout, Edit, Visibility, GetApp } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import socket from '../../socket';
 
 const Dashboard = () => {
   const [pos, setPOs] = useState([]);
@@ -37,8 +38,29 @@ const Dashboard = () => {
   const location = useLocation();
 
   useEffect(() => {
-    fetchPOs();
-  }, []);
+    // Fetch all POs on mount (for persistence on refresh)
+    axios.get('http://localhost:5000/api/pos/all', { withCredentials: true })
+      .then(res => setPOs(res.data))
+      .catch(() => setError('Failed to fetch all POs'));
+    // Listen for PO created and updated events
+    socket.on('po_created', (data) => {
+      setPOs(prevPOs => {
+        if (!prevPOs.some(po => po._id === data.po._id)) {
+          return [data.po, ...prevPOs];
+        }
+        return prevPOs;
+      });
+    });
+    socket.on('po_updated', (data) => {
+      // Optionally, fetch all POs again or update the specific PO in state
+      axios.get('http://localhost:5000/api/pos/all', { withCredentials: true })
+        .then(res => setPOs(res.data));
+    });
+    return () => {
+      socket.off('po_created');
+      socket.off('po_updated');
+    };
+  }, [user]);
 
   // Refresh data when component becomes visible (user navigates back)
   useEffect(() => {
@@ -57,13 +79,11 @@ const Dashboard = () => {
     fetchPOs();
   }, [location.pathname]);
 
+  // Fetch all POs (for both Admin and Employee) from /api/pos/all
   const fetchPOs = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams();
-      if (searchTerm) params.append('search', searchTerm);
-
-      const response = await axios.get(`http://localhost:5000/api/pos?${params.toString()}`);
+      const response = await axios.get('http://localhost:5000/api/pos/all', { withCredentials: true });
       setPOs(response.data);
     } catch (error) {
       console.error('Error fetching POs:', error);
@@ -170,15 +190,18 @@ const Dashboard = () => {
             <Typography variant="h3" component="h1" fontWeight={700}>
               Purchase Orders
             </Typography>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={createNewPO}
-              size="large"
-              sx={{ fontWeight: 600, px: 4, py: 1.5 }}
-            >
-              New PO
-            </Button>
+            {/* Only show New PO button for admin users */}
+            {user?.role === 'admin' && (
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={createNewPO}
+                size="large"
+                sx={{ fontWeight: 600, px: 4, py: 1.5 }}
+              >
+                New PO
+              </Button>
+            )}
           </Box>
 
           <Box display="flex" gap={2} mb={4}>
@@ -210,7 +233,8 @@ const Dashboard = () => {
                       <Typography variant="h6" align="center" color="textSecondary">
                         {searchTerm ? 'No POs found matching your search' : 'No POs created yet'}
                       </Typography>
-                      {!searchTerm && (
+                      {/* Only show Create Your First PO for admin users */}
+                      {!searchTerm && user?.role === 'admin' && (
                         <Box textAlign="center" mt={2}>
                           <Button
                             variant="contained"
@@ -311,24 +335,27 @@ const Dashboard = () => {
             </Grid>
           )}
 
-          <Dialog open={jobTitleDialogOpen} onClose={() => setJobTitleDialogOpen(false)}>
-            <DialogTitle>Enter Job Title</DialogTitle>
-            <DialogContent>
-              <TextField
-                autoFocus
-                margin="dense"
-                label="Job Title"
-                fullWidth
-                value={newJobTitle}
-                onChange={e => setNewJobTitle(e.target.value)}
-                required
-              />
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setJobTitleDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleCreatePOWithJobTitle} variant="contained">Create PO</Button>
-            </DialogActions>
-          </Dialog>
+          {/* Only show job title dialog for admin users */}
+          {user?.role === 'admin' && (
+            <Dialog open={jobTitleDialogOpen} onClose={() => setJobTitleDialogOpen(false)}>
+              <DialogTitle>Enter Job Title</DialogTitle>
+              <DialogContent>
+                <TextField
+                  autoFocus
+                  margin="dense"
+                  label="Job Title"
+                  fullWidth
+                  value={newJobTitle}
+                  onChange={e => setNewJobTitle(e.target.value)}
+                  required
+                />
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setJobTitleDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleCreatePOWithJobTitle} variant="contained">Create PO</Button>
+              </DialogActions>
+            </Dialog>
+          )}
         </Container>
       </Box>
     </>

@@ -65,11 +65,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (username, password) => {
+  const register = async (username, password, role) => {
     try {
       const response = await axios.post('http://localhost:5000/api/auth/register', {
         username,
-        password
+        password,
+        role
       });
 
       const { token: newToken, user: userData } = response.data;
@@ -82,7 +83,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return {
         success: false,
-        message: error.response?.data?.message || 'Registration failed'
+        message: error.response?.data?.message || 'Rnowegistration failed'
       };
     }
   };

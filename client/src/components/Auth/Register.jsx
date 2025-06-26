@@ -16,7 +16,8 @@ const Register = () => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    role: 'employee'
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -50,7 +51,7 @@ const Register = () => {
       return;
     }
 
-    const result = await register(formData.username, formData.password);
+    const result = await register(formData.username, formData.password, formData.role);
     
     if (result.success) {
       navigate('/dashboard');
@@ -142,6 +143,23 @@ const Register = () => {
               onChange={handleChange}
               disabled={loading}
             />
+            <TextField
+              margin="normal"
+              required
+              select
+              fullWidth
+              name="role"
+              label="Select Role"
+              id="role"
+              value={formData.role}
+              onChange={handleChange}
+              disabled={loading}
+              SelectProps={{ native: true }}
+              sx={{ mt: 2 }}
+            >
+              <option value="employee">Employee</option>
+              <option value="admin">Admin</option>
+            </TextField>
             <Button
               type="submit"
               fullWidth
