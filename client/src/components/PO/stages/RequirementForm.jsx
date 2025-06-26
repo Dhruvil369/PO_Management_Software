@@ -17,7 +17,7 @@ import { CloudUpload } from '@mui/icons-material';
 
 const RequirementForm = ({ onComplete, availableMachines, initialData, isEditing, machineNo }) => {
   const [formData, setFormData] = useState({
-    machineNo: machineNo || '',
+    sizeNo: machineNo || '', // renamed from machineNo
     size: initialData?.size || '',
     micron: initialData?.micron || '',
     bagType: initialData?.bagType || '',
@@ -72,8 +72,8 @@ const RequirementForm = ({ onComplete, availableMachines, initialData, isEditing
     console.log('RequirementForm - Form data:', formData);
 
     // Validation
-    if (!formData.machineNo) {
-      setError('Please select a machine number');
+    if (!formData.sizeNo) {
+      setError('Please select a size number');
       setLoading(false);
       return;
     }
@@ -149,17 +149,18 @@ const RequirementForm = ({ onComplete, availableMachines, initialData, isEditing
         <Box component="form" onSubmit={handleSubmit}>
           <Grid container spacing={4}>
             <Grid item xs={12}>
-              <FormControl fullWidth required>
-                <InputLabel>Machine No.</InputLabel>
+              <FormControl fullWidth required sx={{ minWidth: 220 }}>
+                <InputLabel>Size No.</InputLabel>
                 <Select
-                  name="machineNo"
-                  value={formData.machineNo}
+                  name="sizeNo"
+                  value={formData.sizeNo}
                   onChange={handleChange}
                   disabled={loading || isEditing}
+                  MenuProps={{ PaperProps: { style: { maxHeight: 300, minWidth: 220 } } }}
                 >
-                  {availableMachines.map((machineNo) => (
-                    <MenuItem key={machineNo} value={machineNo}>
-                      Machine {machineNo}
+                  {availableMachines.map((sizeNo) => (
+                    <MenuItem key={sizeNo} value={sizeNo}>
+                      Size {sizeNo}
                     </MenuItem>
                   ))}
                 </Select>
@@ -315,7 +316,7 @@ const RequirementForm = ({ onComplete, availableMachines, initialData, isEditing
             >
               {loading
                 ? (isEditing ? 'Updating...' : 'Adding Size...')
-                : (isEditing ? 'Update Machine' : 'Add Size')
+                : (isEditing ? 'Update Size' : 'Add Size')
               }
             </Button>
           </Box>

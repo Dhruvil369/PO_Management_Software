@@ -3,7 +3,7 @@ import { API_BASE_URL } from './apiConfig';
 import { io } from 'socket.io-client';
 
 const socket = io(API_BASE_URL.replace('/api', ''), {
-  transports: ['websocket'],
-  withCredentials: true
+    transports: ['websocket'],
+    withCredentials: true
 });
 export default socket;

@@ -289,13 +289,13 @@ const Dashboard = () => {
                             <Button
                               size="small"
                               variant="contained"
-                              startIcon={<Edit />}
+                              startIcon={<Add />}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleEditPO(po);
                               }}
                             >
-                              Edit
+                              Size
                             </Button>
                           ) : (
                             // Placeholder to maintain layout when Edit button is hidden

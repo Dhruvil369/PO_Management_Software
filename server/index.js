@@ -19,8 +19,9 @@ const io = new Server(server, {
     cors: {
         origin: ['http://localhost:3000',
             'https://po-management-software.onrender.com',
-            'https://po-management-software.vercel.app'],
-       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+            'https://po-management-software.vercel.app'
+        ],
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         credentials: true
     }
 });
@@ -38,9 +39,10 @@ app.set('io', io);
 
 // Middleware
 app.use(cors({
-    origin:  ['http://localhost:3000',
-            'https://po-management-software.onrender.com',
-            'https://po-management-software.vercel.app'],
+    origin: ['http://localhost:3000',
+        'https://po-management-software.onrender.com',
+        'https://po-management-software.vercel.app'
+    ],
     credentials: true
 }));
 
