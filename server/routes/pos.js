@@ -524,11 +524,11 @@ router.get('/:id/pdf', auth, async(req, res) => {
             return res.status(404).json({ message: 'PO not found' });
         }
 
-        // Create PDF document with landscape orientation for better table layout
+        // Create PDF document with minimal margin and A4 landscape for maximum compactness
         const doc = new PDFDocument({
-            margin: 30,
+            margin: 5, // Minimal margin
             layout: 'landscape',
-            size: 'A4'
+            size: 'A4' // Use A4 for best fit
         });
 
         // Set response headers
@@ -538,22 +538,39 @@ router.get('/:id/pdf', auth, async(req, res) => {
         // Pipe PDF to response
         doc.pipe(res);
 
-        // Add title
-        doc.fontSize(16).text(`Purchase Order: ${po.poNumber}`, { align: 'center' });
-        doc.fontSize(10).text(`Date: ${po.createdAt.toDateString()}`, { align: 'center' });
-        doc.fontSize(10).text(`Status: ${po.status} | Current Stage: ${po.getStageDisplayName(po.currentStage)}`, { align: 'center' });
-        doc.fontSize(10).text(`Machines: ${po.machines.length}/6`, { align: 'center' });
-        doc.moveDown(1);
+        // --- Compact Heading Table (Single Row) at the very top ---
+        const headingRow = [
+            { label: 'Purchase Order', value: po.poNumber },
+            { label: 'Date', value: po.createdAt.toDateString() },
+            { label: 'Status', value: po.status === 'completed' ? 'Completed' : 'In Progress' },
+            { label: 'Current Stage', value: po.getStageDisplayName(po.currentStage) },
+            { label: 'Machines', value: `${po.machines.length}/6` },
+        ];
+
+        const headingTableStartX = 5;
+        const headingTableStartY = 5; // Start at the very top
+        const cellWidth = 90; // Smaller for more space
+        const cellHeight = 12;
+        const headingFontSize = 7;
+
+        doc.fontSize(headingFontSize);
+        for (let i = 0; i < headingRow.length; i++) {
+            const x = headingTableStartX + i * cellWidth;
+            doc.rect(x, headingTableStartY, cellWidth, cellHeight).stroke();
+            doc.text(`${headingRow[i].label}: ${headingRow[i].value}`, x + 2, headingTableStartY + 2, { width: cellWidth - 4, align: 'left' });
+        }
+
+        doc.y = headingTableStartY + cellHeight + 2;
 
         // Define table structure
-        const pageWidth = doc.page.width - 60; // Account for margins
+        const pageWidth = doc.page.width - 10; // Account for minimal margins
         const colWidths = {
-            stage: 120,
-            subfield: 100,
-            machine: (pageWidth - 220) / 6 // Remaining width divided by 6 machines
+            stage: 80,
+            subfield: 70,
+            machine: (pageWidth - 150) / 6 // Remaining width divided by 6 machines
         };
 
-        const startX = 30;
+        const startX = 5;
         let currentY = doc.y;
 
         // Helper function to draw table borders
@@ -563,104 +580,61 @@ router.get('/:id/pdf', auth, async(req, res) => {
 
         // Helper function to add text in cell
         const addCellText = (text, x, y, width, height, options = {}) => {
-            const fontSize = options.fontSize || 8;
+            const fontSize = options.fontSize || 6;
             const align = options.align || 'left';
-
             doc.fontSize(fontSize);
-
             // Calculate text position
             const textY = y + (height - fontSize) / 2;
-
             if (align === 'center') {
                 doc.text(text, x, textY, { width: width, align: 'center' });
             } else {
-                doc.text(text, x + 2, textY, { width: width - 4, align: align });
+                doc.text(text, x + 1, textY, { width: width - 2, align: align });
             }
         };
 
         // Draw table headers
-        const headerHeight = 20;
-
-        // Stage header
+        const headerHeight = 12;
         drawTableBorder(startX, currentY, colWidths.stage, headerHeight);
-        addCellText('Workflow Stage', startX, currentY, colWidths.stage, headerHeight, { fontSize: 9, align: 'center' });
-
-        // Subfield header
+        addCellText('Workflow Stage', startX, currentY, colWidths.stage, headerHeight, { fontSize: 7, align: 'center' });
         drawTableBorder(startX + colWidths.stage, currentY, colWidths.subfield, headerHeight);
-        addCellText('Subfield', startX + colWidths.stage, currentY, colWidths.subfield, headerHeight, { fontSize: 9, align: 'center' });
-
-        // Machine headers
+        addCellText('Subfield', startX + colWidths.stage, currentY, colWidths.subfield, headerHeight, { fontSize: 7, align: 'center' });
         for (let i = 1; i <= 6; i++) {
             const machineX = startX + colWidths.stage + colWidths.subfield + (i - 1) * colWidths.machine;
             drawTableBorder(machineX, currentY, colWidths.machine, headerHeight);
-            addCellText(`Machine ${i}`, machineX, currentY, colWidths.machine, headerHeight, { fontSize: 9, align: 'center' });
+            addCellText(`M${i}`, machineX, currentY, colWidths.machine, headerHeight, { fontSize: 7, align: 'center' });
         }
-
         currentY += headerHeight;
 
         // Define all stages and their subfields
-        const stageDefinitions = [{
-                name: 'Requirement',
-                subfields: ['Size', 'Micron', 'Bag Type', 'Quantity', 'Print', 'Color', 'Packaging Type', 'Material'],
-                dataKey: 'requirement'
-            },
-            {
-                name: 'Extrusion Production',
-                subfields: ['Extrusion No.', 'Size', 'Operator Name', 'Ampere', 'Frequency', 'Kgs', 'No. of Rolls', 'Waste', 'QC Approved By', 'Remark'],
-                dataKey: 'extrusionProduction'
-            },
-            {
-                name: 'Printing',
-                subfields: ['Machine No.', 'Size', 'Operator Name', 'No. of Rolls', 'Waste', 'Kgs'],
-                dataKey: 'printing'
-            },
-            {
-                name: 'Cutting & Sealing',
-                subfields: ['Machine No.', 'Size', 'Operator Name', 'Heating 1', 'Heating 2', 'No. of Rolls', 'Cutting Waste', 'Print Waste', 'Kgs'],
-                dataKey: 'cuttingSealing'
-            },
-            {
-                name: 'Punch',
-                subfields: ['Machine No.', 'Bag Size', 'Operator Name', 'Punch Name', 'Kgs', 'Waste'],
-                dataKey: 'punch'
-            },
-            {
-                name: 'Packaging & Dispatch',
-                subfields: ['Size', 'Total Weight', 'No. of Rolls', 'No. of Bags', 'Challan No.'],
-                dataKey: 'packagingDispatch'
-            }
+        const stageDefinitions = [
+            { name: 'Requirement', subfields: ['Size', 'Micron', 'Bag Type', 'Quantity', 'Print', 'Color', 'Packaging Type', 'Material'], dataKey: 'requirement' },
+            { name: 'Extrusion Production', subfields: ['Extrusion No.', 'Size', 'Operator Name', 'Ampere', 'Frequency', 'Kgs', 'No. of Rolls', 'Waste', 'QC Approved By', 'Remark'], dataKey: 'extrusionProduction' },
+            { name: 'Printing', subfields: ['Machine No.', 'Size', 'Operator Name', 'No. of Rolls', 'Waste', 'Kgs'], dataKey: 'printing' },
+            { name: 'Cutting & Sealing', subfields: ['Machine No.', 'Size', 'Operator Name', 'Heating 1', 'Heating 2', 'No. of Rolls', 'Cutting Waste', 'Print Waste', 'Kgs'], dataKey: 'cuttingSealing' },
+            { name: 'Punch', subfields: ['Machine No.', 'Bag Size', 'Operator Name', 'Punch Name', 'Kgs', 'Waste'], dataKey: 'punch' },
+            { name: 'Packaging & Dispatch', subfields: ['Size', 'Total Weight', 'No. of Rolls', 'No. of Bags', 'Challan No.'], dataKey: 'packagingDispatch' }
         ];
 
-        const rowHeight = 15;
+        const rowHeight = 10;
 
         // Draw table rows
         stageDefinitions.forEach((stage) => {
             stage.subfields.forEach((subfield, subfieldIndex) => {
-                // Check if we need a new page
-                if (currentY + rowHeight > doc.page.height - 30) {
-                    doc.addPage();
-                    currentY = 30;
-                }
-
                 // Stage name (only for first subfield of each stage)
                 if (subfieldIndex === 0) {
                     drawTableBorder(startX, currentY, colWidths.stage, rowHeight * stage.subfields.length);
-                    addCellText(stage.name, startX, currentY, colWidths.stage, rowHeight * stage.subfields.length, { fontSize: 8, align: 'center' });
+                    addCellText(stage.name, startX, currentY, colWidths.stage, rowHeight * stage.subfields.length, { fontSize: 6, align: 'center' });
                 }
-
                 // Subfield name
                 drawTableBorder(startX + colWidths.stage, currentY, colWidths.subfield, rowHeight);
-                addCellText(subfield, startX + colWidths.stage, currentY, colWidths.subfield, rowHeight, { fontSize: 8 });
-
+                addCellText(subfield, startX + colWidths.stage, currentY, colWidths.subfield, rowHeight, { fontSize: 6 });
                 // Machine data
                 for (let machineNo = 1; machineNo <= 6; machineNo++) {
                     const machineX = startX + colWidths.stage + colWidths.subfield + (machineNo - 1) * colWidths.machine;
                     drawTableBorder(machineX, currentY, colWidths.machine, rowHeight);
-
                     // Find machine data
                     const machine = po.machines.find(m => m.machineNo === machineNo);
                     let cellValue = '-'; // Changed from 'N/A' to '-'
-
                     if (machine && machine[stage.dataKey]) {
                         const stageData = machine[stage.dataKey];
                         const fieldKey = subfield.toLowerCase()
@@ -682,15 +656,12 @@ router.get('/:id/pdf', auth, async(req, res) => {
                             .replace('challanno', 'challanNo')
                             .replace('heating1', 'heating1')
                             .replace('heating2', 'heating2');
-
                         if (stageData[fieldKey] !== undefined && stageData[fieldKey] !== null && stageData[fieldKey] !== '') {
                             cellValue = String(stageData[fieldKey]);
                         }
                     }
-
-                    addCellText(cellValue, machineX, currentY, colWidths.machine, rowHeight, { fontSize: 7 });
+                    addCellText(cellValue, machineX, currentY, colWidths.machine, rowHeight, { fontSize: 6 });
                 }
-
                 currentY += rowHeight;
             });
         });

@@ -98,6 +98,8 @@ const RequirementForm = ({ onComplete, availableMachines, initialData, isEditing
             submitData[key] = formData[key];
           }
         });
+        // Ensure machineNo is sent
+        submitData.machineNo = formData.sizeNo;
         console.log('RequirementForm - Editing mode, sending JSON:', submitData);
       } else {
         // For new machines, use FormData for file upload
@@ -112,6 +114,8 @@ const RequirementForm = ({ onComplete, availableMachines, initialData, isEditing
             }
           }
         });
+        // Ensure machineNo is sent
+        submitData.append('machineNo', formData.sizeNo);
         console.log('RequirementForm - Adding mode, sending FormData', Array.from(submitData.entries()));
       }
 
