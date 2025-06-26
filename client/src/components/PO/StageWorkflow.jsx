@@ -19,6 +19,7 @@ import { ArrowBack, Add, CheckCircle, RadioButtonUnchecked, Edit } from '@mui/ic
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import socket from '../../socket';
+import { API_BASE_URL, UPLOADS_BASE_URL } from '../../apiConfig';
 
 // Import stage components
 import RequirementForm from './stages/RequirementForm';
@@ -83,7 +84,7 @@ const StageWorkflow = () => {
 }, [machineIdFromUrl, po, stage]); // <-- add stage here
   const fetchPOData = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/pos/${poId}`);
+      const response = await axios.get(`${API_BASE_URL}/pos/${poId}`);
       setPO(response.data);
     } catch (error) {
       console.error('Error fetching PO:', error);
@@ -95,7 +96,7 @@ const StageWorkflow = () => {
 
   const fetchAvailableMachines = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/pos/${poId}/available-machines`);
+      const response = await axios.get(`${API_BASE_URL}/pos/${poId}/available-machines`);
       setAvailableMachines(response.data.availableMachines);
     } catch (error) {
       console.error('Error fetching available machines:', error);
@@ -124,7 +125,7 @@ const StageWorkflow = () => {
         // If editing and formData is FormData (has image), send as multipart/form-data
         if (formData instanceof FormData) {
           await axios.put(
-            `http://localhost:5000/api/pos/${poId}/machines/${editingMachine._id}/stages/${dbStageName}`,
+            `${API_BASE_URL}/pos/${poId}/machines/${editingMachine._id}/stages/${dbStageName}`,
             formData,
             {
               headers: {
@@ -146,7 +147,7 @@ const StageWorkflow = () => {
               }
             });
             await axios.put(
-              `http://localhost:5000/api/pos/${poId}/machines/${editingMachine._id}/stages/${dbStageName}`,
+              `${API_BASE_URL}/pos/${poId}/machines/${editingMachine._id}/stages/${dbStageName}`,
               fd,
               {
                 headers: {
@@ -161,7 +162,7 @@ const StageWorkflow = () => {
               dataObject.date = new Date(dataObject.date).toISOString();
             }
             await axios.put(
-              `http://localhost:5000/api/pos/${poId}/machines/${editingMachine._id}/stages/${dbStageName}`,
+              `${API_BASE_URL}/pos/${poId}/machines/${editingMachine._id}/stages/${dbStageName}`,
               dataObject,
               {
                 headers: {
@@ -175,7 +176,7 @@ const StageWorkflow = () => {
       } else {
         // Add new machine - use URL stage name for route
         const response = await axios.post(
-          `http://localhost:5000/api/pos/${poId}/machines/${stage}`,
+          `${API_BASE_URL}/pos/${poId}/machines/${stage}`,
           formData,
           {
             headers: {
@@ -210,7 +211,7 @@ const StageWorkflow = () => {
     try {
       setError('');
 
-      const response = await axios.put(`http://localhost:5000/api/pos/${poId}/complete-stage`);
+      const response = await axios.put(`${API_BASE_URL}/pos/${poId}/complete-stage`);
 
       console.log('Stage completed:', response.data);
 
@@ -240,7 +241,7 @@ const StageWorkflow = () => {
       const apiStage = stageMapping[stage] || stage;
 
       const response = await axios.put(
-        `http://localhost:5000/api/pos/${poId}/machines/${machineId}/complete-stage/${apiStage}`
+        `${API_BASE_URL}/pos/${poId}/machines/${machineId}/complete-stage/${apiStage}`
       );
 
       console.log('Machine stage completed:', response.data);

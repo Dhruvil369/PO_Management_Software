@@ -24,6 +24,7 @@ import { Add, Search, Logout, Edit, Visibility, GetApp } from '@mui/icons-materi
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import socket from '../../socket';
+import { API_BASE_URL } from '../../apiConfig';
 
 const Dashboard = () => {
   const [pos, setPOs] = useState([]);
@@ -39,7 +40,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     // Fetch all POs on mount (for persistence on refresh)
-    axios.get('http://localhost:5000/api/pos/all', { withCredentials: true })
+    axios.get(`${API_BASE_URL}/pos/all`, { withCredentials: true })
       .then(res => setPOs(res.data))
       .catch(() => setError('Failed to fetch all POs'));
     // Listen for PO created and updated events
@@ -53,7 +54,7 @@ const Dashboard = () => {
     });
     socket.on('po_updated', (data) => {
       // Optionally, fetch all POs again or update the specific PO in state
-      axios.get('http://localhost:5000/api/pos/all', { withCredentials: true })
+      axios.get(`${API_BASE_URL}/pos/all`, { withCredentials: true })
         .then(res => setPOs(res.data));
     });
     return () => {
@@ -83,7 +84,7 @@ const Dashboard = () => {
   const fetchPOs = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/pos/all', { withCredentials: true });
+      const response = await axios.get(`${API_BASE_URL}/pos/all`, { withCredentials: true });
       setPOs(response.data);
     } catch (error) {
       console.error('Error fetching POs:', error);
@@ -107,7 +108,7 @@ const Dashboard = () => {
       return;
     }
     try {
-      const response = await axios.post('http://localhost:5000/api/pos/create', { jobTitle: newJobTitle });
+      const response = await axios.post(`${API_BASE_URL}/pos/create`, { jobTitle: newJobTitle });
       const newPO = response.data.po;
       setJobTitleDialogOpen(false);
       setNewJobTitle('');
@@ -132,7 +133,7 @@ const Dashboard = () => {
 
   const handleDownloadPDF = async (po) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/pos/${po._id}/pdf`, {
+      const response = await axios.get(`${API_BASE_URL}/pos/${po._id}/pdf`, {
         responseType: 'blob'
       });
 

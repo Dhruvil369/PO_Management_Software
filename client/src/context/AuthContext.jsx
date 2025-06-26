@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL + '/api';
+
 const AuthContext = createContext();
 
 export const useAuth = () => {
@@ -30,7 +32,7 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = async () => {
       if (token) {
         try {
-          const response = await axios.get('http://localhost:5000/api/auth/me');
+          const response = await axios.get(`${API_BASE_URL}/auth/me`);
           setUser(response.data.user);
         } catch (error) {
           console.error('Auth check failed:', error);
@@ -45,7 +47,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
         username,
         password
       });
@@ -67,7 +69,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (username, password, role) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/register', {
+      const response = await axios.post(`${API_BASE_URL}/auth/register`, {
         username,
         password,
         role

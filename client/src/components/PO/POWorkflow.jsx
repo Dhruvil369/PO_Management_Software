@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import axios from 'axios';
+import { API_BASE_URL } from '../../apiConfig';
 
 // Import stage components
 import RequirementForm from './stages/RequirementForm';
@@ -58,7 +59,7 @@ const POWorkflow = () => {
 
   const fetchPOData = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/pos/${poId}`);
+      const response = await axios.get(`${API_BASE_URL}/pos/${poId}`);
       setPO(response.data);
     } catch (error) {
       console.error('Error fetching PO:', error);
@@ -70,7 +71,7 @@ const POWorkflow = () => {
 
   const fetchAvailableMachines = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/pos/${poId}/available-machines`);
+      const response = await axios.get(`${API_BASE_URL}/pos/${poId}/available-machines`);
       setAvailableMachines(response.data.availableMachines);
     } catch (error) {
       console.error('Error fetching available machines:', error);
@@ -98,7 +99,7 @@ const POWorkflow = () => {
         console.log('Creating machine with data:', stageData);
 
         const response = await axios.post(
-          `http://localhost:5000/api/pos/${poId}/machines`,
+          `${API_BASE_URL}/pos/${poId}/machines`,
           stageData,
           {
             headers: {
@@ -134,7 +135,7 @@ const POWorkflow = () => {
         console.log('Updating machine:', currentMachine._id, 'stage:', stageNames[activeStep], 'data:', stageData);
 
         const response = await axios.put(
-          `http://localhost:5000/api/pos/${poId}/machines/${currentMachine._id}/stages/${stageNames[activeStep]}`,
+          `${API_BASE_URL}/pos/${poId}/machines/${currentMachine._id}/stages/${stageNames[activeStep]}`,
           stageData
         );
 

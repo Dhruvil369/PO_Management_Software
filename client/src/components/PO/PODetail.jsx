@@ -38,6 +38,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
+import { API_BASE_URL, UPLOADS_BASE_URL } from '../../apiConfig';
 
 const PODetail = () => {
   const { poId } = useParams();
@@ -57,7 +58,7 @@ const PODetail = () => {
 
   const fetchPOData = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/pos/${poId}`);
+      const response = await axios.get(`${API_BASE_URL}/pos/${poId}`);
       setPO(response.data);
     } catch (error) {
       console.error('Error fetching PO:', error);
@@ -69,7 +70,7 @@ const PODetail = () => {
 
   const fetchAvailableMachines = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/pos/${poId}/available-machines`);
+      const response = await axios.get(`${API_BASE_URL}/pos/${poId}/available-machines`);
       setAvailableMachines(response.data.availableMachines);
     } catch (error) {
       console.error('Error fetching available machines:', error);
@@ -124,7 +125,7 @@ const PODetail = () => {
 
   const handleFinalizePO = async () => {
     try {
-      await axios.put(`http://localhost:5000/api/pos/${poId}/finalize`);
+      await axios.put(`${API_BASE_URL}/pos/${poId}/finalize`);
       fetchPOData(); // Refresh data
     } catch (error) {
       console.error('Error finalizing PO:', error);
@@ -134,7 +135,7 @@ const PODetail = () => {
 
   const handleDownloadPDF = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/pos/${poId}/pdf`, {
+      const response = await axios.get(`${API_BASE_URL}/pos/${poId}/pdf`, {
         responseType: 'blob'
       });
       
@@ -154,7 +155,7 @@ const PODetail = () => {
   const handleDownloadChallanPDF = async (machine) => {
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/pos/${po._id}/machines/${machine._id}/challan-pdf`,
+        `${API_BASE_URL}/pos/${po._id}/machines/${machine._id}/challan-pdf`,
         { responseType: 'blob' }
       );
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -183,7 +184,7 @@ const PODetail = () => {
                 <Typography variant="body2"><strong>Image:</strong></Typography>
                 <Box sx={{ mt: 1, mb: 2 }}>
                   <img
-                    src={`http://localhost:5000/uploads/${value}`}
+                    src={`${UPLOADS_BASE_URL}/${value}`}
                     alt="Stage Upload"
                     style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, border: '1px solid #eee' }}
                   />
@@ -500,7 +501,7 @@ const PODetail = () => {
                   const dbStageName = stageMapping[editModal.stageKey];
                   if (formData instanceof FormData) {
                     await axios.put(
-                      `http://localhost:5000/api/pos/${po._id}/machines/${editModal.machine._id}/stages/${dbStageName}`,
+                      `${API_BASE_URL}/pos/${po._id}/machines/${editModal.machine._id}/stages/${dbStageName}`,
                       formData,
                       { headers: { 'Content-Type': 'multipart/form-data' } }
                     );
@@ -517,7 +518,7 @@ const PODetail = () => {
                         }
                       });
                       await axios.put(
-                        `http://localhost:5000/api/pos/${po._id}/machines/${editModal.machine._id}/stages/${dbStageName}`,
+                        `${API_BASE_URL}/pos/${po._id}/machines/${editModal.machine._id}/stages/${dbStageName}`,
                         fd,
                         { headers: { 'Content-Type': 'multipart/form-data' } }
                       );
@@ -527,7 +528,7 @@ const PODetail = () => {
                         dataObject.date = new Date(dataObject.date).toISOString();
                       }
                       await axios.put(
-                        `http://localhost:5000/api/pos/${po._id}/machines/${editModal.machine._id}/stages/${dbStageName}`,
+                        `${API_BASE_URL}/pos/${po._id}/machines/${editModal.machine._id}/stages/${dbStageName}`,
                         dataObject,
                         { headers: { 'Content-Type': 'application/json' } }
                       );
