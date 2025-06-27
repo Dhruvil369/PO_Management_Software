@@ -235,7 +235,7 @@ const PODetail = () => {
           <Box display="flex" alignItems="center" justifyContent="space-between" width="100%">
             <Box display="flex" alignItems="center" gap={2}>
               <Typography variant="h6">
-                Machine {machineNo}
+                Size {machineNo}
               </Typography>
               {hasData ? (
                 <Chip
@@ -404,7 +404,7 @@ const PODetail = () => {
           </Typography>
           
           <Typography variant="body1" gutterBottom>
-            Machines Configured: {po.machines.length}/6
+            Sizes Configured: {po.machines.length}/6
           </Typography>
 
           <Divider sx={{ my: 2 }} />
@@ -451,7 +451,7 @@ const PODetail = () => {
         </Paper>
 
         <Typography variant="h5" gutterBottom>
-          Machine Details
+          Size Details
         </Typography>
 
         <Box>

@@ -270,7 +270,7 @@ const Dashboard = () => {
                         </Typography>
 
                         <Typography variant="body2" mb={1}>
-                          Machines: {po.machines.length}/6
+                          Sizes: {po.machines.length}/6
                         </Typography>
 
                         {po.isFinalized && (

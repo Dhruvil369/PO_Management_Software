@@ -126,7 +126,7 @@ const PunchForm = ({ onComplete, onBack, machineData, initialData }) => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Punch Name"
+                label="Punch Size"
                 name="punchName"
                 value={formData.punchName}
                 onChange={handleChange}

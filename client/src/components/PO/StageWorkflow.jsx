@@ -387,7 +387,7 @@ const StageWorkflow = () => {
         )}
 
         <Typography variant="h4" gutterBottom fontWeight={700}>
-          Machines Added ({po.machines.length}/6)
+          Size Added ({po.machines.length}/6)
         </Typography>
 
         <Grid container spacing={4} sx={{ mb: 4 }}>
@@ -400,7 +400,7 @@ const StageWorkflow = () => {
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                       <Typography variant="h6">
-                        Machine {machine.machineNo}
+                        Size {machine.machineNo}
                       </Typography>
                       {allStagesCompleted ? (
                         <Chip
