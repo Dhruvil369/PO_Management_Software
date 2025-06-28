@@ -77,7 +77,7 @@ const Login = () => {
             }}
           >
             <Typography component="h1" variant="h3" align="center" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-              PO Management
+            ATHARVA BIO PRODUCTS
             </Typography>
             <Typography component="h2" variant="h5" align="center" gutterBottom sx={{ color: 'text.secondary', mb: 3 }}>
               Sign In to Continue

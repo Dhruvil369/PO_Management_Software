@@ -238,7 +238,7 @@ const PackagingDispatchForm = ({ onComplete, onBack, machineData, initialData })
                 size="large"
                 sx={{ minWidth: 180, fontWeight: 600 }}
               >
-                {loading ? 'Saving...' : 'Complete Machine Entry'}
+                {loading ? 'Saving...' : 'Complete PO'}
               </Button>
             </Box>
           </Box>

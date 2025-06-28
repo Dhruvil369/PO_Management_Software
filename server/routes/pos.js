@@ -643,12 +643,20 @@ router.get('/:id/pdf', auth, async(req, res) => {
                     let cellValue = '-'; // Changed from 'N/A' to '-'
                     if (machine && machine[stage.dataKey]) {
                         const stageData = machine[stage.dataKey];
+                        
+                        // Debug logging for all fields in packagingDispatch
+                        if (stage.dataKey === 'packagingDispatch') {
+                            console.log(`PDF DEBUG - Machine ${machineNo} packagingDispatch:`, stageData);
+                        }
+                        
                         let fieldKey = subfield.toLowerCase()
                             .replace(/\s+/g, '')
                             .replace(/\./g, '');
                         // Custom mapping for field keys
                         if (subfield.toLowerCase().includes('no. of rolls')) {
                             fieldKey = 'noOfRolls';
+                        } else if (subfield.toLowerCase().includes('no. of bags')) {
+                            fieldKey = 'noOfBags';
                         } else {
                             fieldKey = fieldKey
                                 .replace('no', 'No')
@@ -669,9 +677,19 @@ router.get('/:id/pdf', auth, async(req, res) => {
                                 .replace('heating2', 'heating2')
                                 .replace('bagfilmcolor', 'bagFilmColor');
                         }
-                        if (subfield.toLowerCase().includes('no. of rolls')) {
-                            console.log('PDF DEBUG:', { subfield, fieldKey, stageData });
+                        
+                        // Debug logging for No. of Bags
+                        if (subfield.toLowerCase().includes('no. of bags')) {
+                            console.log('PDF DEBUG - No. of Bags:', { 
+                                machineNo,
+                                subfield, 
+                                fieldKey, 
+                                stageData, 
+                                value: stageData[fieldKey],
+                                hasValue: stageData[fieldKey] !== undefined && stageData[fieldKey] !== null && stageData[fieldKey] !== ''
+                            });
                         }
+                        
                         if (stageData[fieldKey] !== undefined && stageData[fieldKey] !== null && stageData[fieldKey] !== '') {
                             cellValue = String(stageData[fieldKey]);
                         }

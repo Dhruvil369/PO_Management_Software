@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Paper,
   Typography,
@@ -14,7 +14,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 const PunchForm = ({ onComplete, onBack, machineData, initialData }) => {
   const [formData, setFormData] = useState({
     machineNo: '',
-    bagSize: '',
+    bagSize: initialData?.size || '',
     operatorName: '',
     punchName: '',
     kgs: '',
@@ -24,8 +24,19 @@ const PunchForm = ({ onComplete, onBack, machineData, initialData }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (initialData?.size) {
+      setFormData(prev => ({
+        ...prev,
+        bagSize: initialData.size
+      }));
+    }
+  }, [initialData?.size]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'bagSize') return;
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -50,7 +61,7 @@ const PunchForm = ({ onComplete, onBack, machineData, initialData }) => {
         machineNo: formData.machineNo ? parseInt(formData.machineNo) : null,
         kgs: formData.kgs ? parseFloat(formData.kgs) : null,
         waste: formData.waste ? parseFloat(formData.waste) : null,
-        date: formData.date ? new Date(formData.date).toISOString() : null // ensure date is sent as ISO string
+        date: formData.date ? new Date(formData.date).toISOString() : null
       };
 
       console.log('PunchForm - Submitting data:', submitData);
@@ -104,13 +115,23 @@ const PunchForm = ({ onComplete, onBack, machineData, initialData }) => {
               />
             </Grid>
             <Grid item xs={12}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Bag Size (from Stage 1): <span style={{ color: '#1976d2' }}>{formData.bagSize || 'N/A'}</span>
+              </Typography>
               <TextField
                 fullWidth
                 label="Bag Size"
                 name="bagSize"
                 value={formData.bagSize}
                 onChange={handleChange}
-                disabled={loading}
+                disabled={true}
+                InputProps={{ readOnly: true }}
+                sx={{
+                  '& .MuiInputBase-input.Mui-disabled': {
+                    WebkitTextFillColor: '#1976d2',
+                    fontWeight: 600
+                  }
+                }}
               />
             </Grid>
             <Grid item xs={12}>

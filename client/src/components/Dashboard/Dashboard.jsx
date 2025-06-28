@@ -168,7 +168,7 @@ const Dashboard = () => {
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            PO Management Dashboard
+          ATHARVA BIO PRODUCTS
           </Typography>
           <Typography variant="body1" sx={{ mr: 2 }}>
             Welcome, {user?.username}

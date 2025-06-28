@@ -270,6 +270,11 @@ const StageWorkflow = () => {
           'packaging': editingMachine.packagingDispatch
         };
         stageData = stageDataMapping[stage] || {};
+        
+        // For punch stage, also include the size from requirement stage
+        if (stage === 'punch' && editingMachine.requirement?.size) {
+          stageData.size = editingMachine.requirement.size;
+        }
       }
       // Always include poNumber and jobTitle from parent PO
       return {
