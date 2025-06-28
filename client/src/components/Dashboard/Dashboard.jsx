@@ -226,7 +226,7 @@ const Dashboard = () => {
           {loading ? (
             <Typography>Loading...</Typography>
           ) : (
-            <Grid container spacing={4}>
+            <Grid container spacing={3}>
               {filteredPOs.length === 0 ? (
                 <Grid item xs={12}>
                   <Card>
@@ -252,83 +252,74 @@ const Dashboard = () => {
               ) : (
                 filteredPOs.map((po) => (
                   <Grid item xs={12} sm={6} md={4} lg={3} key={po._id}>
-                    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', boxShadow: 3, borderRadius: 3 }}>
-                      <CardContent sx={{ flexGrow: 1 }}>
-                        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                          <Typography variant="h6" component="h2" fontWeight={600}>
-                            {po.poNumber} {po.jobTitle && `- ${po.jobTitle}`}
-                          </Typography>
-                          <Chip
-                            label={po.status === 'completed' ? 'Completed' : 'In Progress'}
-                            color={getStatusColor(po.status)}
-                            size="small"
-                          />
-                        </Box>
-
-                        <Typography color="textSecondary" gutterBottom>
+                    <Card
+                      sx={{
+                        height: '100%',
+                        minHeight: 250,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        borderRadius: 3,
+                        boxShadow: 4,
+                        transition: 'box-shadow 0.2s',
+                        '&:hover': { boxShadow: 8, borderColor: '#1976d2' },
+                        bgcolor: '#fff',
+                        p: 0.5
+                      }}
+                    >
+                      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1, pb: 0 }}>
+                        <Typography variant="h6" fontWeight={700} sx={{ mb: 0.5, letterSpacing: 0.5, fontSize: 18 }}>
+                          {po.poNumber} {po.jobTitle && <span style={{ fontWeight: 400, fontSize: 15, color: '#888' }}>- {po.jobTitle}</span>}
+                        </Typography>
+                        <Chip
+                          label={po.status === 'completed' ? 'Completed' : 'In Progress'}
+                          color={po.status === 'completed' ? 'success' : 'warning'}
+                          size="small"
+                          sx={{ width: 'fit-content', fontWeight: 600, mb: 1 }}
+                        />
+                        <Typography variant="body2" color="textSecondary" sx={{ fontSize: 14 }}>
                           Created: {new Date(po.createdAt).toLocaleDateString()}
                         </Typography>
-
-                        <Typography variant="body2" mb={1}>
+                        <Typography variant="body2" color="textSecondary" sx={{ fontSize: 14 }}>
                           Sizes: {po.machines.length}/6
                         </Typography>
-
-                        {po.isFinalized && (
-                          <Chip
-                            label="Finalized"
-                            color="success"
-                            size="small"
-                            sx={{ mt: 1 }}
-                          />
-                        )}
                       </CardContent>
-
-                      <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>
-                        <Box>
-                          {po.currentStage !== 'completed' && !po.isFinalized ? (
-                            <Button
-                              size="small"
-                              variant="contained"
-                              startIcon={<Add />}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditPO(po);
-                              }}
-                            >
-                              Size
-                            </Button>
-                          ) : (
-                            // Placeholder to maintain layout when Edit button is hidden
-                            <Box sx={{ height: 36, minWidth: 80 }} />
-                          )}
-                        </Box>
-
-                        <Box display="flex" gap={1}>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            startIcon={<Visibility />}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewPO(po._id);
-                            }}
-                          >
-                            View
-                          </Button>
-
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            startIcon={<GetApp />}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDownloadPDF(po);
-                            }}
-                          >
-                            PDF
-                          </Button>
-                        </Box>
-                      </CardActions>
+                      <Box sx={{ flexGrow: 1 }} />
+                      <CardContent sx={{ pt: 0, pb: 2 }}>
+                        <Grid container spacing={1} justifyContent="flex-start" alignItems="flex-end">
+                          <Grid item xs={12}>
+                            <Box display="flex" gap={1} justifyContent="flex-start" alignItems="center">
+                              <Button
+                                size="small"
+                                variant="contained"
+                                startIcon={<Add />}
+                                onClick={() => handleEditPO(po)}
+                                sx={{ fontWeight: 600, minWidth: 70 }}
+                              >
+                                + SIZE
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                startIcon={<Visibility />}
+                                onClick={() => handleViewPO(po._id)}
+                                sx={{ fontWeight: 600, minWidth: 70 }}
+                              >
+                                VIEW
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                startIcon={<GetApp />}
+                                onClick={() => handleDownloadPDF(po)}
+                                sx={{ fontWeight: 600, minWidth: 70 }}
+                              >
+                                PDF
+                              </Button>
+                            </Box>
+                          </Grid>
+                        </Grid>
+                      </CardContent>
                     </Card>
                   </Grid>
                 ))

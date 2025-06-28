@@ -537,28 +537,34 @@ const PODetail = () => {
 
         {/* Size Overview Section */}
         {po.machines.length > 0 && (
-          <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-            <Typography variant="h6" gutterBottom fontWeight={600}>
+          <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, mb: 3, bgcolor: '#f8fafc' }}>
+            <Typography variant="h6" gutterBottom fontWeight={700} sx={{ letterSpacing: 0.5 }}>
               Size Overview ({po.machines.length}/6)
             </Typography>
-            <Grid container spacing={2}>
+            <Grid container spacing={3}>
               {po.machines.map((machine) => {
                 const sizeValue = machine.requirement?.size || 'Not set';
                 const allStagesCompleted = machine.completedStages.length === 6;
-                
                 return (
                   <Grid item xs={12} sm={6} md={4} lg={3} key={machine._id}>
-                    <Card sx={{ 
-                      height: '100%', 
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      boxShadow: 2, 
-                      borderRadius: 2,
-                      border: machine.requirement?.size ? '2px solid #4caf50' : '2px solid #e0e0e0'
-                    }}>
-                      <CardContent sx={{ flexGrow: 1, p: 2 }}>
-                        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                          <Typography variant="h6" fontWeight={600}>
+                    <Card
+                      sx={{
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        borderRadius: 3,
+                        boxShadow: 4,
+                        border: machine.requirement?.size ? '2px solid #4caf50' : '2px solid #e0e0e0',
+                        transition: 'box-shadow 0.2s',
+                        '&:hover': { boxShadow: 8, borderColor: '#1976d2' },
+                        bgcolor: '#fff',
+                        minHeight: 210
+                      }}
+                    >
+                      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', p: { xs: 2, sm: 3 } }}>
+                        <Box display="flex" alignItems="center" gap={1} mb={1}>
+                          <Typography variant="subtitle1" fontWeight={700} sx={{ fontSize: 18 }}>
                             Size {machine.machineNo}
                           </Typography>
                           {allStagesCompleted ? (
@@ -567,34 +573,47 @@ const PODetail = () => {
                               color="success"
                               size="small"
                               icon={<CheckCircle />}
+                              sx={{ fontWeight: 600 }}
                             />
                           ) : (
                             <Chip
                               label={`${machine.completedStages.length}/6 Stages`}
                               color="primary"
                               size="small"
+                              sx={{ fontWeight: 600 }}
                             />
                           )}
                         </Box>
-                        
-                        {/* Size Value Display */}
-                        <Box sx={{ 
-                          p: 1.5, 
-                          bgcolor: machine.requirement?.size ? '#e8f5e8' : '#f5f5f5',
-                          borderRadius: 1,
-                          border: machine.requirement?.size ? '1px solid #4caf50' : '1px solid #e0e0e0',
-                          textAlign: 'center',
-                          mb: 1
-                        }}>
-                          <Typography variant="body2" color="textSecondary" gutterBottom>
-                            Size Value:
+                        <Box
+                          sx={{
+                            width: '100%',
+                            bgcolor: machine.requirement?.size ? '#e8f5e9' : '#f5f5f5',
+                            borderRadius: 2,
+                            border: machine.requirement?.size ? '1.5px solid #4caf50' : '1.5px solid #e0e0e0',
+                            py: 2,
+                            px: 1,
+                            mb: 2,
+                            textAlign: 'center',
+                            minHeight: 70,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Typography variant="body2" color="textSecondary" sx={{ fontWeight: 500, mb: 0.5 }}>
+                            Size Value
                           </Typography>
-                          <Typography variant="h6" fontWeight={600} color={machine.requirement?.size ? 'primary' : 'textSecondary'}>
+                          <Typography
+                            variant="h4"
+                            fontWeight={800}
+                            color={machine.requirement?.size ? 'primary' : 'textSecondary'}
+                            sx={{ letterSpacing: 1, fontSize: { xs: 24, sm: 28 } }}
+                          >
                             {sizeValue}
                           </Typography>
                         </Box>
-                        
-                        <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.8rem' }}>
+                        <Typography variant="body2" color="textSecondary" sx={{ fontSize: 14, fontWeight: 500 }}>
                           Stages completed: {machine.completedStages.length}/6
                         </Typography>
                       </CardContent>
