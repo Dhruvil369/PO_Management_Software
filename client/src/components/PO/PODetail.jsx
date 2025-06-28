@@ -15,7 +15,9 @@ import {
   Grid,
   Paper,
   Chip,
-  Divider
+  Divider,
+  Card,
+  CardContent
 } from '@mui/material';
 import {
   ArrowBack,
@@ -283,6 +285,7 @@ const PODetail = () => {
     const hasData = !!machine;
     const nextStage = machine ? getNextIncompleteStage(machine) : null;
     const allStagesCompleted = machine ? machine.completedStages.length === 6 : false;
+    const sizeValue = machine?.requirement?.size || 'Not set';
 
     const stages = [
       { key: 'requirement', label: 'Requirement', data: machine?.requirement },
@@ -301,6 +304,24 @@ const PODetail = () => {
               <Typography variant="h6">
                 Size {machineNo}
               </Typography>
+              {/* Size Value Display */}
+              {hasData && (
+                <Box sx={{ 
+                  p: 1, 
+                  bgcolor: machine?.requirement?.size ? '#e8f5e8' : '#f5f5f5',
+                  borderRadius: 1,
+                  border: machine?.requirement?.size ? '1px solid #4caf50' : '1px solid #e0e0e0',
+                  minWidth: 80,
+                  textAlign: 'center'
+                }}>
+                  <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.75rem' }}>
+                    Size:
+                  </Typography>
+                  <Typography variant="body1" fontWeight={600} color={machine?.requirement?.size ? 'primary' : 'textSecondary'} sx={{ fontSize: '0.9rem' }}>
+                    {sizeValue}
+                  </Typography>
+                </Box>
+              )}
               {hasData ? (
                 <Chip
                   label={allStagesCompleted ? "All Completed" : `${machine.completedStages.length}/6 Stages`}
@@ -439,7 +460,7 @@ const PODetail = () => {
           </Typography>
         </Toolbar>
       </AppBar>
- <Box sx={{ width: '100vw',  display: 'flex', flexDirection: 'column' }}></Box>
+      <Box sx={{ width: '100vw',  display: 'flex', flexDirection: 'column' }}></Box>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
@@ -513,6 +534,77 @@ const PODetail = () => {
             )}
           </Box>
         </Paper>
+
+        {/* Size Overview Section */}
+        {po.machines.length > 0 && (
+          <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+            <Typography variant="h6" gutterBottom fontWeight={600}>
+              Size Overview ({po.machines.length}/6)
+            </Typography>
+            <Grid container spacing={2}>
+              {po.machines.map((machine) => {
+                const sizeValue = machine.requirement?.size || 'Not set';
+                const allStagesCompleted = machine.completedStages.length === 6;
+                
+                return (
+                  <Grid item xs={12} sm={6} md={4} lg={3} key={machine._id}>
+                    <Card sx={{ 
+                      height: '100%', 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      boxShadow: 2, 
+                      borderRadius: 2,
+                      border: machine.requirement?.size ? '2px solid #4caf50' : '2px solid #e0e0e0'
+                    }}>
+                      <CardContent sx={{ flexGrow: 1, p: 2 }}>
+                        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                          <Typography variant="h6" fontWeight={600}>
+                            Size {machine.machineNo}
+                          </Typography>
+                          {allStagesCompleted ? (
+                            <Chip
+                              label="All Completed"
+                              color="success"
+                              size="small"
+                              icon={<CheckCircle />}
+                            />
+                          ) : (
+                            <Chip
+                              label={`${machine.completedStages.length}/6 Stages`}
+                              color="primary"
+                              size="small"
+                            />
+                          )}
+                        </Box>
+                        
+                        {/* Size Value Display */}
+                        <Box sx={{ 
+                          p: 1.5, 
+                          bgcolor: machine.requirement?.size ? '#e8f5e8' : '#f5f5f5',
+                          borderRadius: 1,
+                          border: machine.requirement?.size ? '1px solid #4caf50' : '1px solid #e0e0e0',
+                          textAlign: 'center',
+                          mb: 1
+                        }}>
+                          <Typography variant="body2" color="textSecondary" gutterBottom>
+                            Size Value:
+                          </Typography>
+                          <Typography variant="h6" fontWeight={600} color={machine.requirement?.size ? 'primary' : 'textSecondary'}>
+                            {sizeValue}
+                          </Typography>
+                        </Box>
+                        
+                        <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.8rem' }}>
+                          Stages completed: {machine.completedStages.length}/6
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </Paper>
+        )}
 
         <Typography variant="h5" gutterBottom>
           Size Details
