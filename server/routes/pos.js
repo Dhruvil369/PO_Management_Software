@@ -333,17 +333,22 @@ router.put('/:poId/machines/:machineId/stages/:stage', auth, upload.single('imag
         ) {
             // Map 'data' from frontend to 'date' in backend
             const { data, ...rest } = stageData;
+            if (dbStageName === 'extrusionProduction' || dbStageName === 'printing' || dbStageName === 'cuttingSealing' || dbStageName === 'packagingDispatch') {
+                console.log(`Backend: Received noOfRolls for ${dbStageName}:`, rest.noOfRolls);
+            }
             machine[dbStageName] = {
                 ...rest,
                 date: new Date(data)
             };
         } else if (dbStageName === 'packagingDispatch' && req.file) {
             // Handle image update for packagingDispatch
-            machine[dbStageName] = {
-                ...stageData,
-                image: req.file.filename
-            };
+            let pdData = { ...stageData, image: req.file.filename };
+            console.log('Backend: Received noOfRolls for packagingDispatch (file upload):', pdData.noOfRolls);
+            machine[dbStageName] = pdData;
         } else {
+            if (dbStageName === 'extrusionProduction' || dbStageName === 'printing' || dbStageName === 'cuttingSealing' || dbStageName === 'packagingDispatch') {
+                console.log(`Backend: Received noOfRolls for ${dbStageName} (direct):`, stageData.noOfRolls);
+            }
             machine[dbStageName] = stageData;
         }
 
@@ -642,24 +647,31 @@ router.get('/:id/pdf', auth, async(req, res) => {
                             .replace(/\s+/g, '')
                             .replace(/\./g, '');
                         // Custom mapping for field keys
-                        fieldKey = fieldKey
-                            .replace('no', 'No')
-                            .replace('qcapprovedby', 'qcApprovedBy')
-                            .replace('operatorname', 'operatorName')
-                            .replace('noofrolls', 'noOfRolls')
-                            .replace('bagtype', 'bagType')
-                            .replace('packagingtype', 'packagingType')
-                            .replace('extrusionno', 'extrusionNo')
-                            .replace('cuttingwaste', 'cuttingWaste')
-                            .replace('printwaste', 'printWaste')
-                            .replace('bagsize', 'bagSize')
-                            .replace('punchname', 'punchName')
-                            .replace('totalweight', 'totalWeight')
-                            .replace('noofbags', 'noOfBags')
-                            .replace('challanno', 'challanNo')
-                            .replace('heating1', 'heating1')
-                            .replace('heating2', 'heating2')
-                            .replace('bagfilmcolor', 'bagFilmColor');
+                        if (subfield.toLowerCase().includes('no. of rolls')) {
+                            fieldKey = 'noOfRolls';
+                        } else {
+                            fieldKey = fieldKey
+                                .replace('no', 'No')
+                                .replace('qcapprovedby', 'qcApprovedBy')
+                                .replace('operatorname', 'operatorName')
+                                .replace('noofrolls', 'noOfRolls')
+                                .replace('bagtype', 'bagType')
+                                .replace('packagingtype', 'packagingType')
+                                .replace('extrusionno', 'extrusionNo')
+                                .replace('cuttingwaste', 'cuttingWaste')
+                                .replace('printwaste', 'printWaste')
+                                .replace('bagsize', 'bagSize')
+                                .replace('punchname', 'punchName')
+                                .replace('totalweight', 'totalWeight')
+                                .replace('noofbags', 'noOfBags')
+                                .replace('challanno', 'challanNo')
+                                .replace('heating1', 'heating1')
+                                .replace('heating2', 'heating2')
+                                .replace('bagfilmcolor', 'bagFilmColor');
+                        }
+                        if (subfield.toLowerCase().includes('no. of rolls')) {
+                            console.log('PDF DEBUG:', { subfield, fieldKey, stageData });
+                        }
                         if (stageData[fieldKey] !== undefined && stageData[fieldKey] !== null && stageData[fieldKey] !== '') {
                             cellValue = String(stageData[fieldKey]);
                         }
