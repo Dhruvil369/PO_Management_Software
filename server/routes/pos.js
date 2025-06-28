@@ -547,25 +547,30 @@ router.get('/:id/pdf', auth, async(req, res) => {
         // --- Compact Heading Table (Single Row) at the very top ---
         const headingRow = [
             { label: 'Purchase Order', value: po.poNumber },
+            { label: 'Job Title', value: po.jobTitle },
             { label: 'Date', value: po.createdAt.toDateString() },
             { label: 'Status', value: po.status === 'completed' ? 'Completed' : 'In Progress' },
             { label: 'Current Stage', value: po.getStageDisplayName(po.currentStage) },
             { label: 'Machines', value: `${po.machines.length}/6` },
         ];
 
-        const headingTableStartX = 5;
-        const headingTableStartY = 5; // Start at the very top
-        const cellWidth = 90; // Smaller for more space
-        const cellHeight = 12;
         const headingFontSize = 7;
-
         doc.fontSize(headingFontSize);
+        const cellPaddings = 10; // 5px left + 5px right
+        const cellHeight = 12;
+        // Calculate width for each cell based on text length
+        const cellWidths = headingRow.map(cell =>
+            doc.widthOfString(`${cell.label}: ${cell.value}`) + cellPaddings
+        );
+        // Calculate total width and adjust start X if needed (keep at 5 for now)
+        let headingTableStartX = 5;
+        const headingTableStartY = 5;
+        let x = headingTableStartX;
         for (let i = 0; i < headingRow.length; i++) {
-            const x = headingTableStartX + i * cellWidth;
-            doc.rect(x, headingTableStartY, cellWidth, cellHeight).stroke();
-            doc.text(`${headingRow[i].label}: ${headingRow[i].value}`, x + 2, headingTableStartY + 2, { width: cellWidth - 4, align: 'left' });
+            doc.rect(x, headingTableStartY, cellWidths[i], cellHeight).stroke();
+            doc.text(`${headingRow[i].label}: ${headingRow[i].value}`, x + 2, headingTableStartY + 2, { width: cellWidths[i] - 4, align: 'left' });
+            x += cellWidths[i];
         }
-
         doc.y = headingTableStartY + cellHeight + 2;
 
         // Define table structure
