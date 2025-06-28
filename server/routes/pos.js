@@ -550,7 +550,6 @@ router.get('/:id/pdf', auth, async(req, res) => {
             { label: 'Job Title', value: po.jobTitle },
             { label: 'Date', value: po.createdAt.toDateString() },
             { label: 'Status', value: po.status === 'completed' ? 'Completed' : 'In Progress' },
-            { label: 'Current Stage', value: po.getStageDisplayName(po.currentStage) },
             { label: 'Machines', value: `${po.machines.length}/6` },
         ];
 
