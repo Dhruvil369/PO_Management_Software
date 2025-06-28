@@ -601,7 +601,7 @@ router.get('/:id/pdf', auth, async(req, res) => {
         for (let i = 1; i <= 6; i++) {
             const machineX = startX + colWidths.stage + colWidths.subfield + (i - 1) * colWidths.machine;
             drawTableBorder(machineX, currentY, colWidths.machine, headerHeight);
-            addCellText(`M${i}`, machineX, currentY, colWidths.machine, headerHeight, { fontSize: 7, align: 'center' });
+            addCellText(`S${i}`, machineX, currentY, colWidths.machine, headerHeight, { fontSize: 7, align: 'center' });
         }
         currentY += headerHeight;
 

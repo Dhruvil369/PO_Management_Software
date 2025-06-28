@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSize } from '../../../context/SizeContext';
 import {
   Paper,
   Typography,
@@ -16,9 +17,10 @@ import {
 import { CloudUpload } from '@mui/icons-material';
 
 const RequirementForm = ({ onComplete, availableMachines, initialData, isEditing, machineNo }) => {
+  const { size, setSize } = useSize();
   const [formData, setFormData] = useState({
     sizeNo: machineNo || '', // renamed from machineNo
-    size: initialData?.size || '',
+    size: size || initialData?.size || '',
     micron: initialData?.micron || '',
     bagType: initialData?.bagType || '',
     quantity: initialData?.quantity || '',
@@ -37,6 +39,9 @@ const RequirementForm = ({ onComplete, availableMachines, initialData, isEditing
       ...prev,
       [name]: value
     }));
+    if (name === 'size') {
+      setSize(value);
+    }
     setError('');
   };
 

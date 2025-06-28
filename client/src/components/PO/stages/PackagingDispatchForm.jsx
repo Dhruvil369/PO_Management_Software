@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSize } from '../../../context/SizeContext';
 import {
   Paper,
   Typography,
@@ -13,8 +14,9 @@ import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
 const PackagingDispatchForm = ({ onComplete, onBack, machineData, initialData }) => {
+  const { size } = useSize();
   const [formData, setFormData] = useState({
-    size: '',
+    size: size || '',
     totalWeight: '',
     noOfRolls: '',
     noOfBags: '',
@@ -25,8 +27,13 @@ const PackagingDispatchForm = ({ onComplete, onBack, machineData, initialData })
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, size: size }));
+  }, [size]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'size') return; // Prevent editing size
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -126,7 +133,8 @@ const PackagingDispatchForm = ({ onComplete, onBack, machineData, initialData })
                 name="size"
                 value={formData.size}
                 onChange={handleChange}
-                disabled={loading}
+                disabled
+                InputProps={{ readOnly: true }}
               />
             </Grid>
             <Grid item xs={12}>

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSize } from '../../../context/SizeContext';
 import {
   Paper,
   Typography,
@@ -16,10 +17,11 @@ import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
 const ExtrusionProductionForm = ({ onComplete, onBack, machineData, initialData, isEditing, machineNo, availableMachines }) => {
+  const { size } = useSize();
   const [formData, setFormData] = useState({
     machineNo: machineNo || '',
     extrusionNo: initialData?.extrusionNo || '',
-    size: initialData?.size || '',
+    size: size || initialData?.size || '',
     operatorName: initialData?.operatorName || '',
     ampere: initialData?.ampere || '',
     frequency: initialData?.frequency || '',
@@ -33,8 +35,13 @@ const ExtrusionProductionForm = ({ onComplete, onBack, machineData, initialData,
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, size: size }));
+  }, [size]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'size') return; // Prevent editing size
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -134,13 +141,19 @@ const ExtrusionProductionForm = ({ onComplete, onBack, machineData, initialData,
               />
             </Grid>
             <Grid item xs={12}>
+  <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+    Size (from Stage 1): <span style={{ color: '#1976d2' }}>{formData.size || 'N/A'}</span>
+  </Typography>
+</Grid>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Size"
                 name="size"
                 value={formData.size}
                 onChange={handleChange}
-                disabled={loading}
+                disabled
+                InputProps={{ readOnly: true }}
               />
             </Grid>
             <Grid item xs={12}>

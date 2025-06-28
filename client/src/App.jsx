@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { SizeProvider } from './context/SizeContext';
 
 // Import components
 import Login from './components/Auth/Login';
@@ -109,7 +110,9 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <AppRoutes />
+        <SizeProvider>
+          <AppRoutes />
+        </SizeProvider>
       </AuthProvider>
     </ThemeProvider>
   );
