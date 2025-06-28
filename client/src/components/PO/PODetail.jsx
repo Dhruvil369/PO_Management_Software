@@ -490,7 +490,7 @@ const PODetail = () => {
                 startIcon={<Add />}
                 onClick={handleAddMachine}
               >
-                Add Machine
+                Add Size
               </Button>
             )}
 

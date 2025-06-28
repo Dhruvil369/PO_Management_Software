@@ -28,6 +28,7 @@ import PrintingForm from './stages/PrintingForm';
 import CuttingSealingForm from './stages/CuttingSealingForm';
 import PunchForm from './stages/PunchForm';
 import PackagingDispatchForm from './stages/PackagingDispatchForm';
+import SizeCards from './SizeCards';
 
 const StageWorkflow = () => {
   const { poId, stage } = useParams();
@@ -390,95 +391,106 @@ const StageWorkflow = () => {
           Size Added ({po.machines.length}/6)
         </Typography>
 
-        <Grid container spacing={4} sx={{ mb: 4 }}>
-          {po.machines.map((machine) => {
-            const nextStage = getNextIncompleteStage(machine);
-            const allStagesCompleted = machine.completedStages.length === 6;
-            return (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={machine._id}>
-                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', boxShadow: 3, borderRadius: 3 }}>
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                      <Typography variant="h6">
-                        Size {machine.machineNo}
-                      </Typography>
-                      {allStagesCompleted ? (
-                        <Chip
-                          label="All Completed"
-                          color="success"
-                          size="small"
-                          icon={<CheckCircle />}
-                        />
-                      ) : (
-                        <Chip
-                          label={`Next: ${nextStage ? getStageDisplayName(nextStage.route) : 'None'}`}
-                          color="info"
-                          size="small"
-                          icon={<RadioButtonUnchecked />}
-                        />
-                      )}
-                    </Box>
-                    <Typography variant="body2" color="textSecondary" gutterBottom>
-                      Stages completed: {machine.completedStages.length}/6
-                    </Typography>
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="caption" color="textSecondary">
-                        Progress:
-                      </Typography>
-  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-                        {['requirement', 'extrusionProduction', 'printing', 'cuttingSealing', 'punch', 'packagingDispatch'].map(stageName => {
-                          const isCompleted = machine.completedStages.includes(stageName);
-                          const stageDisplayNames = {
-                            'requirement': 'Req',
-                            'extrusionProduction': 'Ext',
-                            'printing': 'Print',
-                            'cuttingSealing': 'Cut',
-                            'punch': 'Punch',
-                            'packagingDispatch': 'Pack'
-                          };
-                          return (
-                            <Chip
-                              key={stageName}
-                              label={stageDisplayNames[stageName]}
-                              size="small"
-                              color={isCompleted ? 'success' : 'default'}
-                              variant={isCompleted ? 'filled' : 'outlined'}
-                              sx={{ fontSize: '0.7rem', height: 20 }}
-                            />
-                          );
-                        })}
+        {/* Use SizeCards component for requirement stage, regular cards for other stages */}
+        {stage === 'requirement' ? (
+          <SizeCards 
+            machines={po.machines}
+            onEditMachine={handleEditMachine}
+            getStageDisplayName={getStageDisplayName}
+            getNextIncompleteStage={getNextIncompleteStage}
+            po={po}
+          />
+        ) : (
+          <Grid container spacing={4} sx={{ mb: 4 }}>
+            {po.machines.map((machine) => {
+              const nextStage = getNextIncompleteStage(machine);
+              const allStagesCompleted = machine.completedStages.length === 6;
+              return (
+                <Grid item xs={12} sm={6} md={4} lg={3} key={machine._id}>
+                  <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', boxShadow: 3, borderRadius: 3 }}>
+                    <CardContent sx={{ flexGrow: 1 }}>
+                      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                        <Typography variant="h6">
+                          Size {machine.machineNo}
+                        </Typography>
+                        {allStagesCompleted ? (
+                          <Chip
+                            label="All Completed"
+                            color="success"
+                            size="small"
+                            icon={<CheckCircle />}
+                          />
+                        ) : (
+                          <Chip
+                            label={`Next: ${nextStage ? getStageDisplayName(nextStage.route) : 'None'}`}
+                            color="info"
+                            size="small"
+                            icon={<RadioButtonUnchecked />}
+                          />
+                        )}
                       </Box>
-                    </Box>
-               
-                    {!allStagesCompleted && nextStage && !po.isFinalized && (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        fullWidth
-                        startIcon={<Edit />}
-                        sx={{ mt: 1 }}
-                        onClick={() => handleEditMachine(machine)}
-                      >
-                        Continue: {getStageDisplayName(nextStage.route)}
-                      </Button>
-                    )}
-                    {allStagesCompleted && (
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        fullWidth
-                        disabled
-                        sx={{ mt: 1 }}
-                      >
-                        ✓ All Stages Completed
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              </Grid>
-            );
-          })}
-        </Grid>
+                      <Typography variant="body2" color="textSecondary" gutterBottom>
+                        Stages completed: {machine.completedStages.length}/6
+                      </Typography>
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="caption" color="textSecondary">
+                          Progress:
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                          {['requirement', 'extrusionProduction', 'printing', 'cuttingSealing', 'punch', 'packagingDispatch'].map(stageName => {
+                            const isCompleted = machine.completedStages.includes(stageName);
+                            const stageDisplayNames = {
+                              'requirement': 'Req',
+                              'extrusionProduction': 'Ext',
+                              'printing': 'Print',
+                              'cuttingSealing': 'Cut',
+                              'punch': 'Punch',
+                              'packagingDispatch': 'Pack'
+                            };
+                            return (
+                              <Chip
+                                key={stageName}
+                                label={stageDisplayNames[stageName]}
+                                size="small"
+                                color={isCompleted ? 'success' : 'default'}
+                                variant={isCompleted ? 'filled' : 'outlined'}
+                                sx={{ fontSize: '0.7rem', height: 20 }}
+                              />
+                            );
+                          })}
+                        </Box>
+                      </Box>
+                 
+                      {!allStagesCompleted && nextStage && !po.isFinalized && (
+                        <Button
+                          variant="contained"
+                          size="small"
+                          fullWidth
+                          startIcon={<Edit />}
+                          sx={{ mt: 1 }}
+                          onClick={() => handleEditMachine(machine)}
+                        >
+                          Continue: {getStageDisplayName(nextStage.route)}
+                        </Button>
+                      )}
+                      {allStagesCompleted && (
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          disabled
+                          sx={{ mt: 1 }}
+                        >
+                          ✓ All Stages Completed
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+              );
+            })}
+          </Grid>
+        )}
 
         {availableMachines.length > 0 && !showAddForm && (
           // Only show Add Size/Add Machine button for admin in stage 1 (requirement)
