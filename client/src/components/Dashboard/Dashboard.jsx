@@ -296,7 +296,7 @@ const Dashboard = () => {
                                 onClick={() => handleEditPO(po)}
                                 sx={{ fontWeight: 600, minWidth: 70 }}
                               >
-                                + SIZE
+                                SIZE
                               </Button>
                               <Button
                                 size="small"
