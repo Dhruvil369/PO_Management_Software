@@ -174,6 +174,71 @@ const PODetail = () => {
     if (!data) {
       return <Typography color="textSecondary">No data entered</Typography>;
     }
+    // Show fields in a specific order for requirement stage
+    if (stageKey === 'requirement') {
+      const order = [
+        'size', 'micron', 'bagType', 'quantity', 'print', 'color', 'bagFilmColor', 'packagingType', 'material', 'image', 'date'
+      ];
+      return (
+        <Grid container spacing={2}>
+          {order.map(key => {
+            const value = data[key];
+            if (value === undefined || value === null || value === '') return null;
+            if (key === 'image' && value) {
+              return (
+                <Grid item xs={12} key={key}>
+                  <Typography variant="body2"><strong>Image:</strong></Typography>
+                  <Box sx={{ mt: 1, mb: 2 }}>
+                    <img
+                      src={`${UPLOADS_BASE_URL}/${value}`}
+                      alt="Stage Upload"
+                      style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, border: '1px solid #eee' }}
+                    />
+                  </Box>
+                </Grid>
+              );
+            }
+            if (key === 'date') {
+              return (
+                <Grid item xs={12} sm={6} key={key}>
+                  <Typography variant="body2">
+                    <strong>Date:</strong> {value ? new Date(value).toLocaleDateString() : ''}
+                  </Typography>
+                </Grid>
+              );
+            }
+            // Custom label for Bag film color
+            if (key === 'bagFilmColor') {
+              return (
+                <Grid item xs={12} sm={6} key={key}>
+                  <Typography variant="body2">
+                    <strong>Bag film color:</strong> {value}
+                  </Typography>
+                </Grid>
+              );
+            }
+            // Custom label for Color
+            if (key === 'color') {
+              return (
+                <Grid item xs={12} sm={6} key={key}>
+                  <Typography variant="body2">
+                    <strong>Color:</strong> {value}
+                  </Typography>
+                </Grid>
+              );
+            }
+            return (
+              <Grid item xs={12} sm={6} key={key}>
+                <Typography variant="body2">
+                  <strong>{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:</strong> {value}
+                </Typography>
+              </Grid>
+            );
+          })}
+        </Grid>
+      );
+    }
+    // Default for other stages
     return (
       <Grid container spacing={2}>
         {Object.entries(data).map(([key, value]) => {
@@ -192,7 +257,6 @@ const PODetail = () => {
               </Grid>
             );
           }
-          // Show both 'data' and 'date' fields as Date
           if (key === 'data' || key === 'date') {
             return (
               <Grid item xs={12} sm={6} key={key}>

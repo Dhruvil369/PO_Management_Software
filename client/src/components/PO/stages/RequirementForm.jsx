@@ -26,6 +26,7 @@ const RequirementForm = ({ onComplete, availableMachines, initialData, isEditing
     quantity: initialData?.quantity || '',
     print: initialData?.print || '',
     color: initialData?.color || '',
+    bagFilmColor: initialData?.bagFilmColor || '', // NEW FIELD
     packagingType: initialData?.packagingType || '',
     material: initialData?.material || '',
     image: null
@@ -260,6 +261,16 @@ const RequirementForm = ({ onComplete, availableMachines, initialData, isEditing
                 label="Color"
                 name="color"
                 value={formData.color}
+                onChange={handleChange}
+                disabled={loading}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Bag film color"
+                name="bagFilmColor"
+                value={formData.bagFilmColor}
                 onChange={handleChange}
                 disabled={loading}
               />

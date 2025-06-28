@@ -14,6 +14,7 @@ const requirementSchema = new mongoose.Schema({
     quantity: Number,
     print: String,
     color: String,
+    bagFilmColor: String,
     packagingType: String,
     material: String,
     image: String, // File path for uploaded image

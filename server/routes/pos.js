@@ -203,7 +203,7 @@ router.post('/:id/machines/:stage', auth, upload.single('image'), async(req, res
         if (stage === 'requirement') {
             // DEBUG: log all fields received
             console.log('Requirement stage req.body:', req.body);
-            const { size, micron, bagType, quantity, print, color, packagingType, material, date } = req.body;
+            const { size, micron, bagType, quantity, print, color, bagFilmColor, packagingType, material, date } = req.body;
             machineEntry.requirement = {
                 machineNo: parseInt(machineNo),
                 size,
@@ -212,6 +212,7 @@ router.post('/:id/machines/:stage', auth, upload.single('image'), async(req, res
                 quantity: parseInt(quantity),
                 print,
                 color,
+                bagFilmColor,
                 packagingType,
                 material,
                 image: req.file ? req.file.filename : null,
@@ -607,7 +608,7 @@ router.get('/:id/pdf', auth, async(req, res) => {
 
         // Define all stages and their subfields
         const stageDefinitions = [
-            { name: 'Requirement', subfields: ['Size', 'Micron', 'Bag Type', 'Quantity', 'Print', 'Color', 'Packaging Type', 'Material'], dataKey: 'requirement' },
+            { name: 'Requirement', subfields: ['Size', 'Micron', 'Bag Type', 'Quantity', 'Print', 'Color', 'Bag film color', 'Packaging Type', 'Material'], dataKey: 'requirement' },
             { name: 'Extrusion Production', subfields: ['Extrusion No.', 'Size', 'Operator Name', 'Ampere', 'Frequency', 'Kgs', 'No. of Rolls', 'Waste', 'QC Approved By', 'Remark'], dataKey: 'extrusionProduction' },
             { name: 'Printing', subfields: ['Machine No.', 'Size', 'Operator Name', 'No. of Rolls', 'Waste', 'Kgs'], dataKey: 'printing' },
             { name: 'Cutting & Sealing', subfields: ['Machine No.', 'Size', 'Operator Name', 'Heating 1', 'Heating 2', 'No. of Rolls', 'Cutting Waste', 'Print Waste', 'Kgs'], dataKey: 'cuttingSealing' },
@@ -637,9 +638,11 @@ router.get('/:id/pdf', auth, async(req, res) => {
                     let cellValue = '-'; // Changed from 'N/A' to '-'
                     if (machine && machine[stage.dataKey]) {
                         const stageData = machine[stage.dataKey];
-                        const fieldKey = subfield.toLowerCase()
+                        let fieldKey = subfield.toLowerCase()
                             .replace(/\s+/g, '')
-                            .replace(/\./g, '')
+                            .replace(/\./g, '');
+                        // Custom mapping for field keys
+                        fieldKey = fieldKey
                             .replace('no', 'No')
                             .replace('qcapprovedby', 'qcApprovedBy')
                             .replace('operatorname', 'operatorName')
@@ -655,7 +658,8 @@ router.get('/:id/pdf', auth, async(req, res) => {
                             .replace('noofbags', 'noOfBags')
                             .replace('challanno', 'challanNo')
                             .replace('heating1', 'heating1')
-                            .replace('heating2', 'heating2');
+                            .replace('heating2', 'heating2')
+                            .replace('bagfilmcolor', 'bagFilmColor');
                         if (stageData[fieldKey] !== undefined && stageData[fieldKey] !== null && stageData[fieldKey] !== '') {
                             cellValue = String(stageData[fieldKey]);
                         }
@@ -685,49 +689,55 @@ router.get('/:poId/machines/:machineId/challan-pdf', auth, async(req, res) => {
         const stage6 = machine.packagingDispatch;
         if (!stage6 || !stage6.challanNo) return res.status(400).json({ message: 'Challan not available for this machine' });
 
-        // PDF generation
-        const doc = new PDFDocument({ margin: 40 });
+        // PDF generation - MATCH THE PROVIDED IMAGE FORMAT
+        const doc = new PDFDocument({ margin: 30, size: 'A4', layout: 'portrait' });
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=Challan-${stage6.challanNo}.pdf`);
         doc.pipe(res);
 
         // --- HEADER ---
-        doc.font('Helvetica-Bold').fontSize(20).text('DELIVERY CHALLAN', { align: 'center' });
+        doc.font('Helvetica-Bold').fontSize(16).text('DELIVERY CHALLAN', { align: 'center' });
         doc.moveDown(0.2);
         doc.font('Helvetica-Bold').fontSize(14).text('ATHARVA BIO PRODUCTS', { align: 'center' });
-        doc.font('Helvetica').fontSize(10).text('Mobile: (+91) 9428840130', { align: 'center' });
-        doc.text('18, Navkar Estate, B/H. GEB Station, Santej,', { align: 'center' });
-        doc.text('Gandhinagar - 382721', { align: 'center' });
-        doc.text('GST IN: 24AUCPP6453C1ZU', { align: 'center' });
-        doc.moveDown(0.8);
-        // --- PO INFO BLOCK ---
-        const infoStartY = doc.y;
-        doc.font('Helvetica').fontSize(11);
-        doc.text(`M/S: ${po.jobTitle || ''}`, 40, infoStartY, { continued: true });
-        doc.text(`D.C. NO.: ${stage6.challanNo}`, 350, infoStartY);
-        doc.text('', 40, doc.y); // new line
-        doc.text('', 40, doc.y, { continued: true });
-        doc.text(`DATE    : ${stage6.date ? new Date(stage6.date).toLocaleDateString() : ''}`, 350, doc.y);
-        doc.text('', 40, doc.y); // new line
-        doc.text('', 40, doc.y, { continued: true });
-        doc.text(`P.O. NO.: ${po.poNumber || ''}`, 350, doc.y);
+        doc.font('Helvetica').fontSize(10).text('Mobile : (+91) 9537905559', { align: 'center' });
+        doc.text('Address: 18, Navkar Estate,', { align: 'center' });
+        doc.text('B/H. GEB Station, Santej,', { align: 'center' });
+        doc.text('Gandhinagar- 382721', { align: 'center' });
+        doc.moveDown(0.2);
+        doc.font('Helvetica-Bold').fontSize(10).text('GST IN : 24AUCPP6453C1ZU', { align: 'center' });
         doc.moveDown(0.5);
+        // --- M/S FIELD ---
+        doc.moveDown(0.7);
+        doc.font('Helvetica').fontSize(11);
+        const infoLeft = 30;
+        doc.text(`M/S. ${po.jobTitle || ''}`, infoLeft);
+        // --- INFO LINE (D.C. NO., P.O. NO., DATE) ---
+        const infoLineY = doc.y;
+        // Compose the info line with extra spaces between fields
+        const dcNo = `D.C. NO. : ${stage6.challanNo || ''}`;
+        const poNo = `P.O. NO. : ${po.poNumber || ''}`;
+        const dateStr = `DATE : ${stage6.date ? new Date(stage6.date).toLocaleDateString() : ''}`;
+        const infoLine = `${dcNo}        ${poNo}        ${dateStr}`; // 8 spaces between fields
+        doc.text(infoLine, infoLeft, infoLineY);
+        doc.moveDown(1.5);
+
         // --- CONSIGNEE & TRANSPORT ---
-        doc.text("CONSIGNEE'S GSTIN: _____________________________", 40, doc.y);
-        doc.text('TRANSPORT MODE   : _____________________________', 40, doc.y);
-        doc.moveDown(1);
+        doc.text("CONSIGNEE'S GSTIN :", infoLeft, infoLineY + 20);
+        doc.text('TRANSPORT MODE   :', infoLeft, infoLineY + 40);
+        doc.moveDown(2.5);
+
         // --- TABLE ---
-        const tableTop = doc.y;
-        const colX = [40, 90, 270, 350, 420, 520];
+        const tableTop = infoLineY + 65;
+        const colX = [infoLeft, infoLeft + 40, infoLeft + 180, infoLeft + 320, infoLeft + 400, infoLeft + 500];
         const rowHeight = 22;
         // Table header background
         doc.rect(colX[0], tableTop, colX[5] - colX[0], rowHeight).fillAndStroke('#f0f0f0', '#000');
         doc.fillColor('#000').font('Helvetica-Bold').fontSize(11);
         doc.text('Sr No.', colX[0], tableTop + 6, { width: colX[1] - colX[0], align: 'center' });
-        doc.text('Description of Goods', colX[1], tableTop + 6, { width: colX[2] - colX[1], align: 'center' });
-        doc.text('Qty (Kg)', colX[2], tableTop + 6, { width: colX[3] - colX[2], align: 'center' });
+        doc.text('Description Of Goods', colX[1], tableTop + 6, { width: colX[2] - colX[1], align: 'center' });
+        doc.text('Qty.', colX[2], tableTop + 6, { width: colX[3] - colX[2], align: 'center' });
         doc.text('Rate', colX[3], tableTop + 6, { width: colX[4] - colX[3], align: 'center' });
-        doc.text('Amount', colX[4], tableTop + 6, { width: colX[5] - colX[4], align: 'center' });
+        doc.text('Total Amount', colX[4], tableTop + 6, { width: colX[5] - colX[4], align: 'center' });
         // Table row
         doc.font('Helvetica').fontSize(11).fillColor('#000');
         const rowY = tableTop + rowHeight;
@@ -745,12 +755,13 @@ router.get('/:poId/machines/:machineId/challan-pdf', auth, async(req, res) => {
         doc.moveTo(colX[0], tableTop + rowHeight).lineTo(colX[5], tableTop + rowHeight).stroke();
         doc.moveTo(colX[0], rowY + rowHeight).lineTo(colX[5], rowY + rowHeight).stroke();
         doc.moveDown(3);
+
         // --- FOOTER ---
         doc.font('Helvetica').fontSize(11);
-        doc.text('We have Received the above Goods in Order & Good Condition.', 40, doc.y);
+        doc.text('We have Received the above Goods in Order & Good Condition.', infoLeft, rowY + rowHeight + 30);
         doc.moveDown(2);
-        doc.text("Receiver's Signature", 40, doc.y);
-        doc.text('FOR, ATHARVA BIO PRODUCTS', 350, doc.y);
+        doc.text("Receiver's Signature", infoLeft, doc.y);
+        doc.text('FOR, ATHARVA BIO PRODUCTS', infoLeft + 350, doc.y);
 
         doc.end();
     } catch (error) {
