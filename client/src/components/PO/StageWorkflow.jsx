@@ -270,9 +270,8 @@ const StageWorkflow = () => {
           'packaging': editingMachine.packagingDispatch
         };
         stageData = stageDataMapping[stage] || {};
-        
-        // For punch stage, also include the size from requirement stage
-        if (stage === 'punch' && editingMachine.requirement?.size) {
+        // Always include size from requirement for all stages except requirement
+        if (stage !== 'requirement' && editingMachine.requirement?.size) {
           stageData.size = editingMachine.requirement.size;
         }
       }

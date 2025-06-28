@@ -16,7 +16,7 @@ const CuttingSealingForm = ({ onComplete, onBack, machineData, initialData }) =>
   const { size } = useSize();
   const [formData, setFormData] = useState({
     machineNo: '',
-    size: size || '',
+    size: initialData?.size || '',
     operatorName: '',
     heating1: '',
     heating2: '',
@@ -30,8 +30,10 @@ const CuttingSealingForm = ({ onComplete, onBack, machineData, initialData }) =>
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setFormData(prev => ({ ...prev, size: size }));
-  }, [size]);
+    if (initialData?.size) {
+      setFormData(prev => ({ ...prev, size: initialData.size }));
+    }
+  }, [initialData?.size]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -130,13 +132,17 @@ const CuttingSealingForm = ({ onComplete, onBack, machineData, initialData }) =>
                 disabled={loading}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                Size (from Stage 1): <span style={{ color: '#1976d2' }}>{formData.size || 'N/A'}</span>
+              </Typography>
+            </Grid>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Size"
                 name="size"
                 value={formData.size}
-                onChange={handleChange}
                 disabled
                 InputProps={{ readOnly: true }}
               />

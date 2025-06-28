@@ -16,7 +16,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 const PackagingDispatchForm = ({ onComplete, onBack, machineData, initialData }) => {
   const { size } = useSize();
   const [formData, setFormData] = useState({
-    size: size || '',
+    size: initialData?.size || '',
     totalWeight: '',
     noOfRolls: '',
     noOfBags: '',
@@ -28,8 +28,10 @@ const PackagingDispatchForm = ({ onComplete, onBack, machineData, initialData })
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setFormData(prev => ({ ...prev, size: size }));
-  }, [size]);
+    if (initialData?.size) {
+      setFormData(prev => ({ ...prev, size: initialData.size }));
+    }
+  }, [initialData?.size]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -127,12 +129,16 @@ const PackagingDispatchForm = ({ onComplete, onBack, machineData, initialData })
         <Box component="form" onSubmit={handleSubmit}>
           <Grid container spacing={4}>
             <Grid item xs={12}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                Size (from Stage 1): <span style={{ color: '#1976d2' }}>{formData.size || 'N/A'}</span>
+              </Typography>
+            </Grid>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Size"
                 name="size"
                 value={formData.size}
-                onChange={handleChange}
                 disabled
                 InputProps={{ readOnly: true }}
               />
