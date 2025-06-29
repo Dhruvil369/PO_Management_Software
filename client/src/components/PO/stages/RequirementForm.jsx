@@ -97,16 +97,30 @@ const RequirementForm = ({ onComplete, availableMachines, initialData, isEditing
       let submitData;
 
       if (isEditing) {
-        // For editing, send as JSON object (no file upload for updates)
-        submitData = {};
-        Object.keys(formData).forEach(key => {
-          if (key !== 'image' && formData[key] !== null && formData[key] !== '') {
-            submitData[key] = formData[key];
-          }
-        });
-        // Ensure machineNo is sent
-        submitData.machineNo = formData.sizeNo;
-        console.log('RequirementForm - Editing mode, sending JSON:', submitData);
+        // For editing, check if there's a new image to upload
+        if (formData.image && formData.image instanceof File) {
+          // If there's a new image, use FormData for file upload
+          submitData = new FormData();
+          Object.keys(formData).forEach(key => {
+            if (formData[key] !== null && formData[key] !== '') {
+              submitData.append(key, formData[key]);
+            }
+          });
+          // Ensure machineNo is sent
+          submitData.append('machineNo', formData.sizeNo);
+          console.log('RequirementForm - Editing mode with new image, sending FormData', Array.from(submitData.entries()));
+        } else {
+          // For editing without new image, send as JSON object
+          submitData = {};
+          Object.keys(formData).forEach(key => {
+            if (key !== 'image' && formData[key] !== null && formData[key] !== '') {
+              submitData[key] = formData[key];
+            }
+          });
+          // Ensure machineNo is sent
+          submitData.machineNo = formData.sizeNo;
+          console.log('RequirementForm - Editing mode without new image, sending JSON:', submitData);
+        }
       } else {
         // For new machines, use FormData for file upload
         submitData = new FormData();

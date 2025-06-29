@@ -318,10 +318,11 @@ router.put('/:poId/machines/:machineId/stages/:stage', auth, upload.single('imag
         console.log('Stage data:', stageData);
 
         // Update the specific stage using the database stage name
-        if (dbStageName === 'requirement' && stageData.date) {
+        if (dbStageName === 'requirement') {
             machine[dbStageName] = {
                 ...stageData,
-                date: new Date(stageData.date)
+                image: req.file ? req.file.filename : (machine[dbStageName]?.image || null), // Preserve existing image if no new file
+                date: stageData.date ? new Date(stageData.date) : (machine[dbStageName]?.date || null) // Preserve existing date if no new date
             };
         } else if (
             (dbStageName === 'extrusionProduction' ||
@@ -338,6 +339,7 @@ router.put('/:poId/machines/:machineId/stages/:stage', auth, upload.single('imag
             }
             machine[dbStageName] = {
                 ...rest,
+                image: req.file ? req.file.filename : (machine[dbStageName]?.image || null), // Preserve existing image if no new file
                 date: new Date(data)
             };
         } else if (dbStageName === 'packagingDispatch' && req.file) {
@@ -349,7 +351,11 @@ router.put('/:poId/machines/:machineId/stages/:stage', auth, upload.single('imag
             if (dbStageName === 'extrusionProduction' || dbStageName === 'printing' || dbStageName === 'cuttingSealing' || dbStageName === 'packagingDispatch') {
                 console.log(`Backend: Received noOfRolls for ${dbStageName} (direct):`, stageData.noOfRolls);
             }
-            machine[dbStageName] = stageData;
+            // For all other cases, preserve existing image if no new file is uploaded
+            machine[dbStageName] = {
+                ...stageData,
+                image: req.file ? req.file.filename : (machine[dbStageName]?.image || null)
+            };
         }
 
         // Add stage to completed stages if not already present (using database stage name)
