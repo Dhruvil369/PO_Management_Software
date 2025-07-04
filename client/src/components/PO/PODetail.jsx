@@ -26,7 +26,8 @@ import {
   ExpandMore,
   CheckCircle,
   RadioButtonUnchecked,
-  Edit
+  Edit,
+  PhotoCamera
 } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
@@ -52,6 +53,7 @@ const PODetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editModal, setEditModal] = useState({ open: false, stageKey: '', machine: null });
+  const [openImage, setOpenImage] = useState({ open: false, url: '' });
 
   useEffect(() => {
     fetchPOData();
@@ -320,6 +322,21 @@ const PODetail = () => {
                   <Typography variant="body1" fontWeight={600} color={machine?.requirement?.size ? 'primary' : 'textSecondary'} sx={{ fontSize: '0.9rem' }}>
                     {sizeValue}
                   </Typography>
+                  {/* Image button below size value */}
+                  <IconButton
+                    color="primary"
+                    aria-label="View Image"
+                    sx={{ mt: 1 }}
+                    onClick={() => {
+                      if (machine.requirement?.image) {
+                        setOpenImage({ open: true, url: `${UPLOADS_BASE_URL}/${machine.requirement.image}` });
+                      } else {
+                        setOpenImage({ open: true, url: '' });
+                      }
+                    }}
+                  >
+                    <PhotoCamera />
+                  </IconButton>
                 </Box>
               )}
               {hasData ? (
@@ -612,6 +629,21 @@ const PODetail = () => {
                           >
                             {sizeValue}
                           </Typography>
+                          {/* Image button below size value */}
+                          <IconButton
+                            color="primary"
+                            aria-label="View Image"
+                            sx={{ mt: 1 }}
+                            onClick={() => {
+                              if (machine.requirement?.image) {
+                                setOpenImage({ open: true, url: `${UPLOADS_BASE_URL}/${machine.requirement.image}` });
+                              } else {
+                                setOpenImage({ open: true, url: '' });
+                              }
+                            }}
+                          >
+                            <PhotoCamera />
+                          </IconButton>
                         </Box>
                         <Typography variant="body2" color="textSecondary" sx={{ fontSize: 14, fontWeight: 500 }}>
                           Stages completed: {machine.completedStages.length}/6
@@ -741,6 +773,21 @@ const PODetail = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditModal({ open: false, stageKey: '', machine: null })} color="secondary">Cancel</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Image Modal */}
+      <Dialog open={openImage.open} onClose={() => setOpenImage({ open: false, url: '' })} maxWidth="xl" fullWidth>
+        <DialogTitle>Stage 1 Uploaded Image</DialogTitle>
+        <DialogContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+          {openImage.url ? (
+            <img src={openImage.url} alt="Stage 1 Upload" style={{ maxWidth: '100%', maxHeight: '80vh', borderRadius: 8 }} />
+          ) : (
+            <Typography>No image uploaded for this size.</Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenImage({ open: false, url: '' })} color="primary">Close</Button>
         </DialogActions>
       </Dialog>
     </>

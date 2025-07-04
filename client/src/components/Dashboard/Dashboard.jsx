@@ -25,6 +25,8 @@ import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import socket from '../../socket';
 import { API_BASE_URL } from '../../apiConfig';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const Dashboard = () => {
   const [pos, setPOs] = useState([]);
@@ -150,6 +152,87 @@ const Dashboard = () => {
     }
   };
 
+  const handlePrintRequirement = (po) => {
+    // Header info
+    const poNumber = po.poNumber || '';
+    const jobTitle = po.jobTitle || '';
+    const date = po.createdAt ? new Date(po.createdAt).toDateString() : '';
+    const status = po.status === 'completed' ? 'Completed' : 'In Progress';
+    const machinesCount = `${(po.machines || []).length}/6`;
+
+    // All possible subfields for Requirement (stage 1)
+    const subfields = [
+      'Size',
+      'Micron',
+      'Bag Type',
+      'Quantity',
+      'Print',
+      'Color',
+      'Bag film color',
+      'Packaging Type',
+      'Material',
+    ];
+
+    // Build table body: each row is a subfield, each column S1-S6 is the value for that subfield for that size
+    const body = subfields.map(subfield => {
+      const row = [
+        'Requirement',
+        subfield,
+        ...Array.from({ length: 6 }, (_, i) => {
+          const req = po.machines && po.machines[i] && po.machines[i].requirement;
+          if (!req) return '';
+          // Map subfield to property name in requirement object
+          switch (subfield) {
+            case 'Size': return req.Size || '';
+            case 'Micron': return req.Micron || '';
+            case 'Bag Type': return req.BagType || '';
+            case 'Quantity': return req.Quantity || '';
+            case 'Print': return req.Print || '';
+            case 'Color': return req.Color || '';
+            case 'Bag film color': return req.BagFilmColor || '';
+            case 'Packaging Type': return req.PackagingType || '';
+            case 'Material': return req.Material || '';
+            default: return '';
+          }
+        })
+      ];
+      return row;
+    });
+
+    // Table head
+    const head = [[
+      'Workflow Stage',
+      'Subfield',
+      'S1', 'S2', 'S3', 'S4', 'S5', 'S6',
+    ]];
+
+    // Create PDF
+    const doc = new jsPDF({ orientation: 'landscape' });
+    doc.setFontSize(12);
+    doc.text(`Job Title: ${jobTitle}`, 10, 10);
+
+    autoTable(doc, {
+      startY: 15,
+      head: head,
+      body: body,
+      styles: { halign: 'center', valign: 'middle', fontSize: 10 },
+      headStyles: { fillColor: [255, 255, 255], textColor: 0, fontStyle: 'bold' },
+      theme: 'grid',
+      columnStyles: {
+        0: { cellWidth: 35 }, // Workflow Stage
+        1: { cellWidth: 30 }, // Subfield
+        2: { cellWidth: 25 },
+        3: { cellWidth: 25 },
+        4: { cellWidth: 25 },
+        5: { cellWidth: 25 },
+        6: { cellWidth: 25 },
+        7: { cellWidth: 25 },
+      },
+      margin: { left: 5, right: 5 },
+    });
+    doc.save(`${po.poNumber}_Requirement.pdf`);
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'completed':
@@ -226,7 +309,7 @@ const Dashboard = () => {
           {loading ? (
             <Typography>Loading...</Typography>
           ) : (
-            <Grid container spacing={3}>
+            <Grid container spacing={3} columns={12}>
               {filteredPOs.length === 0 ? (
                 <Grid item xs={12}>
                   <Card>
@@ -251,11 +334,13 @@ const Dashboard = () => {
                 </Grid>
               ) : (
                 filteredPOs.map((po) => (
-                  <Grid item xs={12} sm={6} md={4} lg={3} key={po._id}>
+                  <Grid item xs={12} sm={6} md={4} lg={4} key={po._id}>
                     <Card
                       sx={{
-                        height: '100%',
-                        minHeight: 250,
+                        width: 340,
+                        height: 300,
+                        minHeight: 300,
+                        maxHeight: 300,
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
@@ -264,19 +349,40 @@ const Dashboard = () => {
                         transition: 'box-shadow 0.2s',
                         '&:hover': { boxShadow: 8, borderColor: '#1976d2' },
                         bgcolor: '#fff',
-                        p: 0.5
+                        p: 0.5,
+                        overflow: 'hidden',
+                        mx: 'auto',
                       }}
                     >
                       <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1, pb: 0 }}>
-                        <Typography variant="h6" fontWeight={700} sx={{ mb: 0.5, letterSpacing: 0.5, fontSize: 18 }}>
-                          {po.poNumber} {po.jobTitle && <span style={{ fontWeight: 400, fontSize: 15, color: '#888' }}>- {po.jobTitle}</span>}
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            mb: 0.5,
+                            letterSpacing: 0.5,
+                            fontSize: 18,
+                            minHeight: '2.6em',
+                            maxHeight: '3.5em',
+                            overflow: 'hidden',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            whiteSpace: 'normal',
+                            wordBreak: 'break-word',
+                            color: '#222',
+                            fontWeight: 700,
+                          }}
+                        >
+                          {po.poNumber}{po.jobTitle ? ` - ${po.jobTitle}` : ''}
                         </Typography>
-                        <Chip
-                          label={po.status === 'completed' ? 'Completed' : 'In Progress'}
-                          color={po.status === 'completed' ? 'success' : 'warning'}
-                          size="small"
-                          sx={{ width: 'fit-content', fontWeight: 600, mb: 1 }}
-                        />
+                        <Box sx={{ mb: 1 }}>
+                          <Chip
+                            label={po.status === 'completed' ? 'Completed' : 'In Progress'}
+                            color={po.status === 'completed' ? 'success' : 'warning'}
+                            size="small"
+                            sx={{ width: 'fit-content', fontWeight: 600 }}
+                          />
+                        </Box>
                         <Typography variant="body2" color="textSecondary" sx={{ fontSize: 14 }}>
                           Created: {new Date(po.createdAt).toLocaleDateString()}
                         </Typography>
@@ -288,7 +394,7 @@ const Dashboard = () => {
                       <CardContent sx={{ pt: 0, pb: 2 }}>
                         <Grid container spacing={1} justifyContent="flex-start" alignItems="flex-end">
                           <Grid item xs={12}>
-                            <Box display="flex" gap={1} justifyContent="flex-start" alignItems="center">
+                            <Box display="flex" gap={1} justifyContent="flex-start" alignItems="center" flexWrap="wrap">
                               <Button
                                 size="small"
                                 variant="contained"
@@ -316,6 +422,17 @@ const Dashboard = () => {
                               >
                                 PDF
                               </Button>
+                              {/* Print button only for admin users */}
+                              {user?.role === 'admin' && (
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  onClick={() => handlePrintRequirement(po)}
+                                  sx={{ fontWeight: 600, minWidth: 70 }}
+                                >
+                                  Print
+                                </Button>
+                              )}
                             </Box>
                           </Grid>
                         </Grid>
