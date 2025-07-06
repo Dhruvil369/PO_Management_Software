@@ -162,38 +162,26 @@ const Dashboard = () => {
 
     // All possible subfields for Requirement (stage 1)
     const subfields = [
-      'Size',
-      'Micron',
-      'Bag Type',
-      'Quantity',
-      'Print',
-      'Color',
-      'Bag film color',
-      'Packaging Type',
-      'Material',
+      { label: 'Size', key: 'size' },
+      { label: 'Micron', key: 'micron' },
+      { label: 'Bag Type', key: 'bagType' },
+      { label: 'Quantity', key: 'quantity' },
+      { label: 'Print', key: 'print' },
+      { label: 'Color', key: 'color' },
+      { label: 'Bag film color', key: 'bagFilmColor' },
+      { label: 'Packaging Type', key: 'packagingType' },
+      { label: 'Material', key: 'material' },
     ];
 
     // Build table body: each row is a subfield, each column S1-S6 is the value for that subfield for that size
     const body = subfields.map(subfield => {
       const row = [
         'Requirement',
-        subfield,
+        subfield.label,
         ...Array.from({ length: 6 }, (_, i) => {
           const req = po.machines && po.machines[i] && po.machines[i].requirement;
           if (!req) return '';
-          // Map subfield to property name in requirement object
-          switch (subfield) {
-            case 'Size': return req.Size || '';
-            case 'Micron': return req.Micron || '';
-            case 'Bag Type': return req.BagType || '';
-            case 'Quantity': return req.Quantity || '';
-            case 'Print': return req.Print || '';
-            case 'Color': return req.Color || '';
-            case 'Bag film color': return req.BagFilmColor || '';
-            case 'Packaging Type': return req.PackagingType || '';
-            case 'Material': return req.Material || '';
-            default: return '';
-          }
+          return req[subfield.key] || '';
         })
       ];
       return row;
@@ -422,17 +410,14 @@ const Dashboard = () => {
                               >
                                 PDF
                               </Button>
-                              {/* Print button only for admin users */}
-                              {user?.role === 'admin' && (
-                                <Button
-                                  size="small"
-                                  variant="outlined"
-                                  onClick={() => handlePrintRequirement(po)}
-                                  sx={{ fontWeight: 600, minWidth: 70 }}
-                                >
-                                  Print
-                                </Button>
-                              )}
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={() => handlePrintRequirement(po)}
+                                sx={{ fontWeight: 600, minWidth: 70 }}
+                              >
+                                Print
+                              </Button>
                             </Box>
                           </Grid>
                         </Grid>
